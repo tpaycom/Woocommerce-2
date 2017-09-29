@@ -1,0 +1,27 @@
+<?php
+?>
+
+<br/>
+
+<div id="termsCheckboxBox">
+	<br/>
+	<input id="tpay-accept-regulations-checkbox" type="checkbox" name="regulations" style="
+    text-align: right;   
+    float:left;">
+	<label for="tpay-accept-regulations-checkbox">
+		
+		<?php tpay\Lang::l('accept') ?> <a href="<?php echo $data['regulation_url'] ?>"
+										   target="_blank"><?php tpay\Lang::l('regulations_url') ?></a>
+		<?php tpay\Lang::l('regulations'); ?>
+	</label>
+
+</div>
+
+<script type="text/javascript">
+	var regulations_form_input = document.getElementById('tpay-regulations-input'),
+		regulation_checkbox = document.getElementById('tpay-accept-regulations-checkbox');
+	regulation_checkbox.onchange = function () {
+		regulations_form_input.value = (this.checked) ? 1 : 0;
+	};
+
+</script>

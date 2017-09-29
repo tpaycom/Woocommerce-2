@@ -1,0 +1,24 @@
+<?php
+
+?>
+
+    <div class="insidebg" id="blik">
+        <div id="input_container">
+            <center>
+                <img src="https://secure.tpay.com/_/banks/b64.png?2"/>
+                <input type="text" id="blikcode" name="blikcode" value="" maxlength="6" pattern=".{6,}"
+                       title="Kod blik powinien składać się z 6 cyfr!"/>
+            </center>
+            <div>
+                <?php tpay\Lang::l('blik_info') ?><br/>
+                <?php tpay\Lang::l('blik_info2') ?><br/>
+                <small>
+                    <?php tpay\Lang::l('blik_accept') ?>
+                    <a href="<?php echo $data['regulation_url'] ?>"
+                       target="_blank"><?php tpay\Lang::l('regulations_url') ?></a>
+                    <?php tpay\Lang::l('regulations'); ?>
+                </small>
+            </div>
+        </div>
+    </div>
+<?php
