@@ -119,17 +119,8 @@ class SettingsTpay
                 static::DEFAULT_SETTING => __('0', static::WOOCOMMERCE),
                 static::DESC_TIP        => true,
             ),
-            'status'            => array(
-                static::TITLE           => __('Status zamówienia po opłaceniu w tpay.com', static::WOOCOMMERCE),
-                static::TYPE            => static::SELECT,
-                static::DEFAULT_SETTING => '0',
-                static::OPTIONS         => array(
-                    '0' => __('W trakcie realizacji', static::WOOCOMMERCE),
-                    '1' => __('Zrealizowane', static::WOOCOMMERCE),
-                ),
-            ),
             'doplata'           => array(
-                static::TITLE           => __('Dopłata doliczana za korzystanie z Transferuj', static::WOOCOMMERCE),
+                static::TITLE           => __('Dopłata doliczana za korzystanie z tej metody płatności', static::WOOCOMMERCE),
                 static::TYPE            => static::SELECT,
                 static::DEFAULT_SETTING => '0',
                 static::OPTIONS         => array(
@@ -164,6 +155,24 @@ class SettingsTpay
                 static::OPTIONS         => array(
                     '0' => __('Kafelki', static::WOOCOMMERCE),
                     '1' => __('Lista', static::WOOCOMMERCE),
+                ),
+            ),
+            'auto_finish_order'         => array(
+                static::TITLE           => __('Automatycznie oznaczaj zamówienie jako zrealizowane', static::WOOCOMMERCE),
+                static::TYPE            => static::SELECT,
+                static::DEFAULT_SETTING => 0,
+                static::OPTIONS         => array(
+                    0 => __('NIE', static::WOOCOMMERCE),
+                    1 => __('TAK', static::WOOCOMMERCE),
+                ),
+            ),
+            'proxy_server'         => array(
+                static::TITLE           => __('Mój serwer korzysta z komunikacji przez proxy', static::WOOCOMMERCE),
+                static::TYPE            => static::SELECT,
+                static::DEFAULT_SETTING => 0,
+                static::OPTIONS         => array(
+                    0 => __('NIE', static::WOOCOMMERCE),
+                    1 => __('TAK', static::WOOCOMMERCE),
                 ),
             ),
             'documentation'     => array(

@@ -91,7 +91,7 @@ class Util
      * Save text to log file with details
      *
      * @param string $title action name
-     * @param string $text text to save
+     * @param string $text $array text to save
      */
     public static function log($title, $text)
     {

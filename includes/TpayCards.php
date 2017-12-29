@@ -1,5 +1,12 @@
 <?php
 
+use tpay\Lang;
+use tpay\PaymentCard;
+use tpay\TException;
+use tpay\Util;
+use tpay\Validate;
+use tpay\CardApi;
+
 class WC_Gateway_Tpay_Cards extends WC_Payment_Gateway
 {
     const REGULATIONS = 'regulations';
@@ -41,9 +48,11 @@ class WC_Gateway_Tpay_Cards extends WC_Payment_Gateway
     public $midId = 11;
     public $siteDomain;
     private $pluginUrl;
+    private $tableName;
 
     public function __construct()
     {
+        global $wpdb;
         $this->id = __(static::GATEWAY_ID, static::WOOCOMMERCE);
 
         $this->has_fields = true;
@@ -95,7 +104,11 @@ class WC_Gateway_Tpay_Cards extends WC_Payment_Gateway
             add_action('woocommerce_cart_calculate_fees', array($this, 'addFeeTpay'), 99);
             add_action('woocommerce_review_order_after_submit', array($this, 'basketReload'));
         }
-
+        $this->supports = array(
+            'refunds'
+        );
+        $this->tableName = $wpdb->prefix . "woocommerce_tpay";
+        $this->installDatabase();
         $path = dirname(__FILE__);
         include_once $path . '/lib/src/_class_tpay/Lang.php';
         include_once $path . '/lib/src/_class_tpay/CardApi.php';
@@ -164,12 +177,27 @@ class WC_Gateway_Tpay_Cards extends WC_Payment_Gateway
             }
 
             try {
-                \tpay\Validate::validateCardCurrency($saleCurrency);
+                Validate::validateCardCurrency($saleCurrency);
                 return true;
-            } catch (tpay\TException $exception) {
+            } catch (TException $exception) {
                 return false;
             }
         }
+    }
+
+    public function installDatabase()
+    {
+        global $wpdb;
+        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        $charset_collate = $wpdb->get_charset_collate();
+
+        $sql = "CREATE TABLE `" . $this->tableName . "` (
+  id mediumint(9) NOT NULL AUTO_INCREMENT,
+  wooId mediumint(9) NOT NULL,
+  midId mediumint(9) NOT NULL,
+  PRIMARY KEY  (id)
+) $charset_collate;";
+        dbDelta($sql);
     }
 
     public function admin_options()
@@ -191,6 +219,7 @@ class WC_Gateway_Tpay_Cards extends WC_Payment_Gateway
 
     public function gateway_communication()
     {
+
         if (filter_input(INPUT_GET, static::ORDER_ID) && (filter_input(INPUT_GET, static::CARDDATA))) {
 
             $basicClass = new WC_Gateway_Transferuj();
@@ -200,20 +229,22 @@ class WC_Gateway_Tpay_Cards extends WC_Payment_Gateway
             $transactionData[static::CARDDATA] = str_replace(' ', '+', filter_input(INPUT_GET, static::CARDDATA));
 
             $order = new WC_Order($orderId);
-            $transactionData[static::CURRENCY] = method_exists($order,'get_currency') ? $order->get_currency() :
+            $transactionData[static::CURRENCY] = method_exists($order, 'get_currency') ? $order->get_currency() :
                 $order->get_order_currency();
             $transactionData['opis'] = $this->get_option('opis' . $this->midId)
                 . " Zamówienie nr " . $order->get_order_number();
             $response = $this->processCardSale($transactionData);
+
+            $this->setTpayOrder($orderId, $this->midId);
             if (isset($response[static::RESULT]) && (int)$response[static::RESULT] === 1) {
-                $paymentCard = new tpay\PaymentCard(
+                $paymentCard = new PaymentCard(
                     (string)$this->cardApiKey,
                     (string)$this->cardApiPassword, (string)$this->verificationCode,
                     (string)$this->hashAlg, (string)$this->keyRSA
                 );
                 $paymentCard->validateSign($response['sign'], $response['sale_auth'], $response['card'],
                     $transactionData['kwota'], $response['date'], 'correct',
-                    \tpay\Validate::validateCardCurrency($transactionData[static::CURRENCY]),
+                    Validate::validateCardCurrency($transactionData[static::CURRENCY]),
                     isset($response['test_mode']) ? '1' : '', '', '');
                 $basicClass->completePayment($orderId, static::SUCCESS, false);
 
@@ -246,14 +277,14 @@ class WC_Gateway_Tpay_Cards extends WC_Payment_Gateway
     public function processCardSale($transactionData)
     {
         if (strcmp(get_locale(), "pl_PL") == 0) {
-            tpay\Lang::setLang('pl');
+            Lang::setLang('pl');
         } else {
-            tpay\Lang::setLang('en');
+            Lang::setLang('en');
         }
         if ($this->debugMode !== 'no') {
             var_dump($transactionData);
         }
-        $paymentCard = new tpay\PaymentCard(
+        $paymentCard = new PaymentCard(
             (string)$this->cardApiKey,
             (string)$this->cardApiPassword, (string)$this->verificationCode,
             (string)$this->hashAlg, (string)$this->keyRSA
@@ -271,13 +302,23 @@ class WC_Gateway_Tpay_Cards extends WC_Payment_Gateway
             true,
             get_locale(),
             $transactionData['pow_url'],
-            $transactionData['pow_url_blad']
+            $transactionData['pow_url_blad'],
+            $transactionData['module']
         );
+    }
+
+    private function setTpayOrder($orderId, $midId)
+    {
+        $orderId = (int)$orderId;
+        $midId = (int)$midId;
+        $sql = "INSERT INTO $this->tableName SET wooId = $orderId, midId = $midId";
+        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        dbDelta($sql);
     }
 
     public function verifyPaymentResponse()
     {
-        $paymentCard = new tpay\PaymentCard(
+        $paymentCard = new PaymentCard(
             (string)$this->cardApiKey,
             (string)$this->cardApiPassword, (string)$this->verificationCode,
             (string)$this->hashAlg, (string)$this->keyRSA
@@ -287,11 +328,13 @@ class WC_Gateway_Tpay_Cards extends WC_Payment_Gateway
             $basicClass = new WC_Gateway_Transferuj();
             $orderId = explode('|', $resp[static::ORDER_ID1]);
             $order = new WC_Order($orderId[0]);
-            $orderCurrency = method_exists($order,'get_currency') ? $order->get_currency() : $order->get_order_currency();
-            $orderCurrency = tpay\Validate::validateCardCurrency($orderCurrency);
+            $orderCurrency = method_exists($order,
+                'get_currency') ? $order->get_currency() : $order->get_order_currency();
+            $orderCurrency = Validate::validateCardCurrency($orderCurrency);
             $paymentCard->validateSign($resp['sign'],
                 $resp['sale_auth'], $resp['card'], (double)$order->get_total(),
                 $resp['date'], 'correct', $orderCurrency, isset($resp['test_mode']) ? '1' : '', $resp['order_id']);
+            $basicClass->trId = $resp['sale_auth'];
             $basicClass->completePayment($orderId[0], static::SUCCESS, false);
         }
     }
@@ -304,7 +347,7 @@ class WC_Gateway_Tpay_Cards extends WC_Payment_Gateway
 
         switch ($fee) {
             case 1:
-                \tpay\Lang::l('fee_info');
+                Lang::l('fee_info');
                 echo " <b> " . $feeAmount . $currency . " </b><br/><br/>";
                 break;
             case 2:
@@ -312,7 +355,7 @@ class WC_Gateway_Tpay_Cards extends WC_Payment_Gateway
                 $kwota = $kwota * $feeAmount / 100;
                 $kwota = doubleval($kwota);
                 $kwota = number_format($kwota, 2);
-                \tpay\Lang::l('fee_info');
+                Lang::l('fee_info');
                 echo "<b>" . $kwota . $currency . "</b><br/><br/>";
                 break;
             default:
@@ -344,11 +387,46 @@ class WC_Gateway_Tpay_Cards extends WC_Payment_Gateway
         return array(
             static::RESULT   => static::SUCCESS,
             static::REDIRECT => add_query_arg(array(
-                static::CARDDATA    => filter_input(INPUT_POST, static::CARDDATA),
-                static::TPAY_ID     => filter_input(INPUT_POST, static::TPAY_ID),
-                static::ORDER_ID    => $orderId,
+                static::CARDDATA => filter_input(INPUT_POST, static::CARDDATA),
+                static::TPAY_ID  => filter_input(INPUT_POST, static::TPAY_ID),
+                static::ORDER_ID => $orderId,
             ), $this->notify_link)
         );
 
     }
+
+    public function process_refund($order_id, $amount = null, $reason = '')
+    {
+        $order = new WC_Order($order_id);
+        $midId = $this->getOrderMidId($order->get_id());
+
+        $paymentCard = new CardApi(
+            $this->get_option('cardApiKey' . $midId),
+            $this->get_option('cardApiPassword' . $midId),
+            $this->get_option('verificationCode' . $midId),
+            $this->get_option('hashAlg' . $midId)
+        );
+        $currency = Validate::validateCardCurrency(method_exists($order, 'get_currency') ?
+            $order->get_currency() : $order->get_order_currency());
+        try {
+            $paymentCard->refund('', $order->get_transaction_id(), $reason, $amount, $currency);
+            return true;
+        } catch (Exception $exception) {
+            Util::log('Exception in refunding card payment', $exception->getMessage());
+            return false;
+        }
+
+    }
+
+    private function getOrderMidId($orderId)
+    {
+        global $wpdb;
+        $orderId = (int)$orderId;
+        $sql = "SELECT midId FROM $this->tableName WHERE wooId = $orderId";
+        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        $result = $wpdb->get_results($sql);
+
+        return $result[0]->midId;
+    }
+
 }

@@ -253,13 +253,9 @@ class PaymentCard
      */
     private function checkServer()
     {
-        if (!isset($_SERVER[static::REMOTE_ADDR])
-            || !in_array($_SERVER[static::REMOTE_ADDR], $this->secureIP)
-        ) {
-            return false;
-        }
-
-        return true;
+        return (isset($_SERVER[static::REMOTE_ADDR]) && in_array($_SERVER[static::REMOTE_ADDR], $this->secureIP))
+        || (isset($_SERVER['HTTP_CF_CONNECTING_IP']) && in_array($_SERVER['HTTP_CF_CONNECTING_IP'], $this->secureIP))
+            ? true : false;
     }
 
     /**
@@ -401,7 +397,8 @@ class PaymentCard
         $enablePowUrl = false,
         $language = 'pl',
         $powUrl = '',
-        $powUrlBlad = ''
+        $powUrlBlad = '',
+        $module = null
     ) {
         $cardData = Util::post('carddata', static::STRING);
         $clientName = Util::post('client_name', static::STRING);
@@ -443,7 +440,8 @@ class PaymentCard
             $language,
             $enablePowUrl,
             $powUrl,
-            $powUrlBlad
+            $powUrlBlad,
+            $module
         );
 
         Util::log('card secure sale response', print_r($response, true));

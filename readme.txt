@@ -3,8 +3,8 @@ Contributors: tpay.com
 Donate link: https://tpay.com/
 Tags: woocommerce, tpay, payment, polish gateway, polska brama płatności, bramka płatności, płatności internetowe
 Requires at least: 2.0.0
-Tested up to: 4.8.2
-Stable tag: 2.4.0
+Tested up to: 4.9.1
+Stable tag: 2.5.3
 License: GPLv2
 Accept payments from all major polish banks directly on your WooCommerce site via tpay.com polish payment gateway system.
 
@@ -74,7 +74,7 @@ b)	Wyślij cały folder  do katalogu wp-content/plugins znajdującego się w Two
 
 = Testy =
 
-Moduł był testowany na systemie zbudowanym z wersji Woocommerce 3.1.1 i Wordpress 4.8.2.
+Moduł był testowany na systemie zbudowanym z wersji Woocommerce 3.2.6 i Wordpress 4.9.1.
 
 
 = KONTAKT =
@@ -82,6 +82,22 @@ Moduł był testowany na systemie zbudowanym z wersji Woocommerce 3.1.1 i Wordpr
 W razie potrzeby odpowiedzi na pytania powstałe podczas lektury lub szczegółowe wyjaśnienie kwestii technicznych prosimy o kontakt poprzez formularz znajdujący się w Panelu Odbiorcy lub na adres e-mail: pt@tpay.com
 
 == Changelog ==
+v2.5.3
+Dodano zbieranie statystyk modułu
+v2.5.2
+Poprawiono nadpisywanie wyglądu pól formularza płatności.
+v2.5.1
+Dodano opcję automatycznego oznaczania zamówienia jako zrealizowane
+v2.5.0
+Dodano obsługę zwrotów z panelu widoku zamówienia. Aby opcja zwrotów była aktywna i działała poprawnie, należy wygenerować i wprowadzić klucz API w ustawienia wtyczki zgodnie z instrukcją https://secure.tpay.com/integration/instruction/64
+v2.4.4
+Poprawa wyświetlania polskich znaków
+v2.4.3
+Optymalizacja kodu i wyświetlania błędów
+v2.4.2
+Naprawiono błąd ładowania klasy pomocniczej Util
+v2.4.1
+Zmodyfikowano sprawdzanie adresów IP serwerów powiadomień tpay.
 v2.4.0
 Dodano weryfikację obsługiwanych typów kart płatniczych i blokowanie prób zapłaty nieobsługiwanymi kartami.
 Usunięto zbędne pola z formularza płatności kartami.
@@ -177,6 +193,7 @@ Prosimy wykonać aktualizację ze względu na nadchodzącą zmianę adresów ser
 == Frequently Asked Questions ==
 Feel free to contact us on info@tpay.com
 == Upgrade Notice ==
-Prosimy wykonać aktualizację ze względu na nadchodzącą zmianę adresów serwerów powiadomień.
+= 2.5.0 =
+Dodano obsługę zwrotów z panelu widoku zamówienia. Aby opcja zwrotów była aktywna i działała poprawnie, należy wygenerować i wprowadzić klucz API w ustawienia wtyczki zgodnie z instrukcją https://secure.tpay.com/integration/instruction/64
 == Screenshots ==
 no screenshots

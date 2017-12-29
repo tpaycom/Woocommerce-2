@@ -151,6 +151,7 @@ class CardAPI
      * @param bool $enablePowUrl
      * @param string $powUrl
      * @param string $powUrlBlad
+     * @param string $module
      * @return bool|mixed
      */
     private function registerSaleBase(
@@ -166,7 +167,8 @@ class CardAPI
         $lang = 'pl',
         $enablePowUrl = false,
         $powUrl = '',
-        $powUrlBlad = ''
+        $powUrlBlad = '',
+        $module = null
     ) {
         $amount = number_format(str_replace(array(',', ' '), array('.', ''), $amount), 2, '.', '');
 
@@ -187,7 +189,9 @@ class CardAPI
         $params[static::APIPASS] = $this->apiPass;
 
         $params = array_merge($params, $this->checkReturnUrls($powUrl, $powUrlBlad));
-
+        if (!is_null($module) && strlen($module) <= 32) {
+            $params['module'] = $module;
+        }
         Util::log('Card request', print_r($params, true));
         return Curl::doCurlRequest($this->apiURL . $this->apiKey, $params);
     }
@@ -287,6 +291,7 @@ class CardAPI
      * @param bool $enablePowUrl
      * @param string $powUrl
      * @param string $powUrlBlad
+     * @param string $module
      * @return bool|mixed
      * @throws TException
      */
@@ -302,7 +307,8 @@ class CardAPI
         $lang = 'pl',
         $enablePowUrl = true,
         $powUrl = '',
-        $powUrlBlad = ''
+        $powUrlBlad = '',
+        $module = null
     ) {
         if (!is_string($carddata) || strlen($carddata) === 0) {
             throw new TException('Card data are not set');
@@ -321,7 +327,8 @@ class CardAPI
             $lang,
             $enablePowUrl,
             $powUrl,
-            $powUrlBlad
+            $powUrlBlad,
+            $module
         );
     }
 
@@ -588,16 +595,7 @@ class CardAPI
     public function refund($clientAuthCode, $saleAuthCode, $refundDesc, $amount = null, $currency = '985', $lang = 'pl')
     {
         $errors = array();
-        /*
-         * 	required clientAuthCode or sale_auth, refund_desc and amount if only clientAuthCode passed
-         */
-        if (!is_string($clientAuthCode) || strlen($clientAuthCode) === 0) {
-            $errors[] = static::EMPTYCODE;
-        } else {
-            if (strlen($clientAuthCode) !== 40) {
-                $errors[] = static::INVALIDCODE;
-            }
-        }
+
 
         if (!is_string($saleAuthCode) || strlen($saleAuthCode) === 0) {
             $errors[] = 'Sale auth code is empty.';
@@ -637,7 +635,6 @@ class CardAPI
         }
 
         $params[static::METHOD] = 'refund';
-        $params[static::DESC] = $refundDesc;
 
         if ($clientAuthCode) {
             $params[static::CLIAUTH] = $clientAuthCode;
@@ -645,6 +642,7 @@ class CardAPI
         if ($saleAuthCode) {
             $params[static::SALEAUTH] = $saleAuthCode;
         }
+        $params[static::DESC] = $refundDesc;
         if ($amount) {
             $params[static::AMOUNT] = $amount;
         }
@@ -659,7 +657,17 @@ class CardAPI
         $params[static::SIGN] = hash($this->hashAlg, implode('', $params) . $this->verificationCode);
         $params[static::APIPASS] = $this->apiPass;
 
-        return Curl::doCurlRequest($this->apiURL . $this->apiKey, $params);
+        Util::log('Refund request params', print_r($params, true));
+
+        $result = Curl::doCurlRequest($this->apiURL . $this->apiKey, $params);
+
+        Util::log('Refund results', print_r($result, true));
+
+        if ((int)$result['result'] !== 1) {
+            throw new TException('Refunding error', $result['err_code']);
+        }
+
+        return $result;
     }
 
     /**

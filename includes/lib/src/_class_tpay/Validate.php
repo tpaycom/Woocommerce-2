@@ -657,6 +657,13 @@ class Validate
             self::VALIDATION => array(self::OPTIONS),
             self::OPTIONS    => array(0, 1),
         ),
+        /**
+         * Module/integration name. Used for statistics.
+         */
+        'module'              => array(
+            self::REQUIRED   => false,
+            self::VALIDATION => array(self::STRING, self::MAXLENGHT_32),
+        ),
     );
     /**
      * List of fields available in response for blik payment
@@ -994,6 +1001,13 @@ class Validate
         'language'       => array(
             self::REQUIRED   => false,
             self::VALIDATION => array(self::STRING),
+        ),
+        /**
+         * Module/integration name. Used for statistics.
+         */
+        'module'              => array(
+            self::REQUIRED   => false,
+            self::VALIDATION => array(self::STRING, self::MAXLENGHT_32),
         ),
     );
     /**

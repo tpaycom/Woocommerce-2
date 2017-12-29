@@ -129,7 +129,7 @@ class PaymentBasic
      *
      * @return array
      */
-    public function checkPayment($paymentType = Validate::PAYMENT_TYPE_BASIC)
+    public function checkPayment($paymentType = Validate::PAYMENT_TYPE_BASIC, $proxy)
     {
         Util::log('check basic payment', '$_POST: ' . "\n" . print_r($_POST, true));
 
@@ -143,7 +143,7 @@ class PaymentBasic
         );
         Util::logLine('Check MD5: ' . (int)$checkMD5);
 
-        if ($this->validateServerIP === true && $this->checkServer() === false) {
+        if ($this->validateServerIP === true && $this->checkServer($proxy) === false) {
             throw new TException('Request is not from secure server');
         }
 
@@ -182,18 +182,17 @@ class PaymentBasic
      *
      * @return bool
      */
-    private function checkServer()
+    private function checkServer($proxy)
     {
-        if (!isset($_SERVER[static::REMOTE_ADDR])
-            || !in_array($_SERVER[static::REMOTE_ADDR], $this->secureIP)
-        ) {
-            if (!isset($_SERVER['HTTP_X_FORWARDED_FOR'])
-                || !in_array($_SERVER['HTTP_X_FORWARDED_FOR'], $this->secureIP)
-            ) {
-                return false;
+        if ((bool)$proxy) {
+            if (isset($_SERVER['HTTP_X_FORWARDED_FOR']) && in_array($_SERVER['HTTP_X_FORWARDED_FOR'], $this->secureIP))
+            {
+                return true;
             }
         }
-        return true;
+        return (isset($_SERVER[static::REMOTE_ADDR]) && in_array($_SERVER[static::REMOTE_ADDR], $this->secureIP))
+        || (isset($_SERVER['HTTP_CF_CONNECTING_IP']) && in_array($_SERVER['HTTP_CF_CONNECTING_IP'], $this->secureIP))
+            ? true : false;
     }
 
     /**
@@ -213,7 +212,7 @@ class PaymentBasic
 
         $res = Validate::getResponse($paymentType);
 
-        if ($this->validateServerIP === true && $this->checkServer() === false) {
+        if ($this->validateServerIP === true && $this->checkServer(false) === false) {
             throw new TException('Request is not from secure server');
         }
 
