@@ -184,15 +184,13 @@ class PaymentBasic
      */
     private function checkServer($proxy)
     {
-        if ((bool)$proxy) {
-            if (isset($_SERVER['HTTP_X_FORWARDED_FOR']) && in_array($_SERVER['HTTP_X_FORWARDED_FOR'], $this->secureIP))
-            {
+        if ((bool)$proxy && isset($_SERVER['HTTP_X_FORWARDED_FOR'])
+            && in_array($_SERVER['HTTP_X_FORWARDED_FOR'], $this->secureIP)) {
                 return true;
-            }
         }
-        return (isset($_SERVER[static::REMOTE_ADDR]) && in_array($_SERVER[static::REMOTE_ADDR], $this->secureIP))
-        || (isset($_SERVER['HTTP_CF_CONNECTING_IP']) && in_array($_SERVER['HTTP_CF_CONNECTING_IP'], $this->secureIP))
-            ? true : false;
+
+        return isset($_SERVER[static::REMOTE_ADDR]) && in_array($_SERVER[static::REMOTE_ADDR], $this->secureIP) ?
+            true : false;
     }
 
     /**
