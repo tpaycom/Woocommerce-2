@@ -11,7 +11,7 @@
  * Description: Brama płatności tpay.com do WooCommerce.
  * Author: tpay.com
  * Author URI: http://www.tpay.com
- * Version: 2.5.3
+ * Version: 2.6.42
  */
 use tpay\Lang;
 use tpay\PaymentBasic;
@@ -52,7 +52,6 @@ function initTpayGateway()
         return;
     }
 
-
     class WC_Gateway_Transferuj extends WC_Payment_Gateway
     {
         const REGULATIONS = 'regulamin';
@@ -80,7 +79,7 @@ function initTpayGateway()
         const WC_API = 'wc-api';
         private $pluginUrl;
 
-        public $trId;
+        private $trId;
 
         /**
          * Constructor for the gateway.
@@ -94,9 +93,7 @@ function initTpayGateway()
         public function __construct()
         {
             $this->id = __(static::GATEWAY_ID, static::WOOCOMMERCE);
-
             $this->has_fields = true;
-
             $this->method_title = __('tpay.com', static::WOOCOMMERCE);
             if ((isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
                 || (is_ssl())
@@ -118,9 +115,6 @@ function initTpayGateway()
             // Load the settings.
             $this->init_form_fields();
             $this->init_settings();
-            if (!$this->is_valid_for_use()) {
-                $this->enabled = 'no';
-            }
             // Define user set variables
             $this->title = $this->get_option('title');
             $this->opis = $this->get_option('opis');
@@ -134,11 +128,13 @@ function initTpayGateway()
             $this->api_key = $this->get_option('api_key');
             $this->api_pass = $this->get_option('api_pass');
             $this->proxy_server = (bool)(int)$this->get_option('proxy_server');
+            $this->enable_IP_validation = (bool)(int)$this->get_option('enable_IP_validation');
             $this->autoFinish = (int)$this->get_option('auto_finish_order');
-            if (!empty($this->api_key) && !empty($this->api_pass)){
+            $this->shipping_methods = $this->get_option('shipping_methods', array());
+            if (!empty($this->api_key) && !empty($this->api_pass)) {
                 $this->supports = array(
-                'refunds'
-            );
+                    'refunds'
+                );
             }
             // Actions
             add_action('woocommerce_update_options_payment_gateways_'
@@ -160,7 +156,7 @@ function initTpayGateway()
             include_once 'includes/lib/src/_class_tpay/Curl.php';
             include_once 'includes/lib/src/_class_tpay/TransactionApi.php';
             include_once 'includes/lib/src/_class_tpay/Lang.php';
-
+            include_once 'includes/AddFee.php';
         }
 
         /**
@@ -175,9 +171,9 @@ function initTpayGateway()
             $charge = $this->get_option(static::DOPLATA);
             $list = $this->get_option('bank_list');
             $tiles = $this->get_option(static::BANK_VIEW);
-
+            $shippingSettings = $this->getShippingMethods();
             $settingsTpay = new SettingsTpay();
-            $this->form_fields = $settingsTpay->getSettings($charge, $list, $tiles);
+            $this->form_fields = $settingsTpay->getSettings($charge, $list, $tiles, $shippingSettings);
 
         }
 
@@ -185,15 +181,23 @@ function initTpayGateway()
          * Check if this gateway is enabled and available in the user's country.
          * @return bool
          */
-        public function is_valid_for_use()
+        public function is_available()
         {
-            return get_woocommerce_currency() === "PLN";
+            if (get_woocommerce_currency() !== "PLN" || $this->enabled !== 'yes') {
+                return false;
+            }
+            if ($this->isAvailableForShippingMethod($this->shipping_methods) === false) {
+                return false;
+            }
+
+            return parent::is_available();
         }
 
         public function addFeeTpay()
         {
             //dodawanie do zamowienia oplaty za tpay.com
-            include 'includes/addFee.php';
+            $feeClass = new AddFee();
+            $feeClass->addFeeTpay(static::GATEWAY_ID, $this->doplata, $this->kwota_doplaty);
         }
 
         public function basketReload()
@@ -213,17 +217,14 @@ function initTpayGateway()
                 Lang::l('fee_info');
                 echo "<b>" . $this->get_option(static::KWOTA_DOPLATY) . " zł</b><br/><br/>";
             }
-
+            $orderAmount = WC()->cart->cart_contents_total + WC()->cart->shipping_total;
             if ($this->get_option(static::DOPLATA) == 2) {
-                $kwota = WC()->cart->cart_contents_total + WC()->cart->shipping_total;
-                $kwota = $kwota * ($this->get_option(static::KWOTA_DOPLATY)) / 100;
-                $kwota = doubleval($kwota);
-                $kwota = number_format($kwota, 2);
+                $orderAmount = $orderAmount * ($this->get_option(static::KWOTA_DOPLATY)) / 100;
+                $orderAmount = doubleval($orderAmount);
+                $orderAmount = number_format($orderAmount, 2);
                 Lang::l('fee_info');
-                echo "<b>" . $kwota . " zł</b><br/><br/>";
+                echo "<b>" . $orderAmount . " zł</b><br/><br/>";
             }
-
-            $kwota = WC()->cart->cart_contents_total + WC()->cart->shipping_total;
 
             $data['merchant_id'] = $this->seller_id;
             $data['show_regulations_checkbox'] = true;
@@ -233,9 +234,8 @@ function initTpayGateway()
             include_once 'includes/lib/src/common/_css/style.css';
             echo '</style>';
             echo $this->description;
-            if ($this->blikOn() && $kwota >= 1) {
+            if ($this->blikOn() && $orderAmount >= 1) {
                 $data['static_files_url'] = $this->pluginUrl . '/includes/';
-
                 include_once 'includes/_tpl/blikForm.phtml';
                 $paymentArray = array(1, 2);
                 if (in_array($this->paymentType(), $paymentArray)) {
@@ -246,21 +246,13 @@ function initTpayGateway()
             }
             echo '<input type="hidden" name="regulamin" id="tpay-regulations-input" value="0">';
             echo '<input type="hidden" id="tpay-payment-submit">';
-
-            if ($this->paymentType() == 1) {
-
+            $amount = (float)WC()->cart->total;
+            $showInstallments = $amount >= 300 && $amount <= 4730 ? 'true' : 'false';
+            if ($this->paymentType() == 1 || $this->paymentType() == 2) {
+                $templateName = $this->paymentType() == 1 ? 'bankSelection' : 'bankSelectionList';
                 echo '<input type="hidden" name="kanal" id="tpay-channel-input" value=" ">';
-
-                include_once 'includes/lib/src/common/_tpl/bankSelection.phtml';
-
-            } elseif ($this->paymentType() == 2) {
-
-                echo '<input type="hidden" name="kanal" id="tpay-channel-input" value=" ">';
-
-                include_once 'includes/lib/src/common/_tpl/bankSelectionList.phtml';
-
-            } else {
-                include_once 'includes/_tpl/displayNone.phtml';
+                include_once 'includes/lib/src/common/_tpl/' . $templateName . '.phtml';
+                echo '<script>renderTpayChannels(' . $showInstallments . ')</script>';
             }
         }
 
@@ -271,7 +263,6 @@ function initTpayGateway()
 
         public function paymentType()
         {
-
             if ($this->get_option(static::BANK_LIST) == "0" && $this->get_option(static::BANK_VIEW) == "0") {
                 $type = 1;
             } elseif ($this->get_option(static::BANK_LIST) == "0" && $this->get_option(static::BANK_VIEW) == "1") {
@@ -281,6 +272,7 @@ function initTpayGateway()
             } else {
                 $type = 0;
             }
+
             return $type;
         }
 
@@ -292,6 +284,7 @@ function initTpayGateway()
         public function add_transferuj_gateway($methods)
         {
             $methods[] = static::GATEWAY_NAME;
+
             return $methods;
         }
 
@@ -307,13 +300,11 @@ function initTpayGateway()
          * Sends and receives data to/from tpay.com server
          */
         //woocommerce required function
-
         public function gateway_communication()
         {
             if (filter_input(INPUT_GET, static::ORDER_ID)) {
                 $data = $this->collectData(filter_input(INPUT_GET, static::ORDER_ID));
                 $this->sendPaymentData($data);
-
             } else {
                 $this->verifyPaymentResponse();
             }
@@ -324,28 +315,14 @@ function initTpayGateway()
 
         public function collectData($orderId)
         {
-            // get order data
-            $order = new WC_Order($orderId);
-            $wcData = $order->get_address();
-            // populate data array to be posted
-            $data['kwota'] = $order->get_total();
-            $data['opis'] = trim($this->opis . " Zamówienie nr " . $order->get_order_number());
-            $data['crc'] = $orderId;
-            $data['email'] = $wcData['email'];
-            $data['nazwisko'] = $wcData['first_name'] . ' ' . $wcData['last_name'];
-            $data['adres'] = $wcData['address_1'] . ' ' . $wcData['address_2'];
-            $data['miasto'] = $wcData['city'];
-            $data['kraj'] = $wcData['country'];
-            $data['kod'] = $wcData['postcode'];
-            $data['telefon'] = str_replace(' ', '', $wcData['phone']);
-            $data['pow_url'] = $this->get_return_url($order) . '&utm_nooverride=1';
-            $data['pow_url_blad'] = is_user_logged_in() ?
-                get_permalink(get_option('woocommerce_myaccount_page_id')) . "&orders&utm_nooverride=1"
-                : $order->get_cancel_order_url() . '&utm_nooverride=1';
-            $data['wyn_url'] = $this->notify_link;
-            if (filter_input(INPUT_GET, 'regulamin') === "1") {
-                $data['akceptuje_regulamin'] = 1;
+            if (!is_numeric($orderId)) {
+                $orderId = $this->crypt($orderId, false);
             }
+            if ($orderId === false) {
+                throw new Exception('Invalid order ID');
+            }
+            $order = wc_get_order($orderId);
+            $wcData = $order->get_address();
             if (strcmp(get_locale(), "pl_PL") == 0) {
                 $data[static::JEZYK] = "PL";
             } elseif (strcmp(get_locale(), "de_DE") == 0) {
@@ -353,11 +330,34 @@ function initTpayGateway()
             } else {
                 $data[static::JEZYK] = "EN";
             }
-
+            $description = array(
+                'PL' => 'Zamówienie nr',
+                'EN' => 'Order no',
+                'DE' => 'Bestellnr',
+            );
+            $data = array(
+                'kwota' => $order->get_total(),
+                'opis' => sprintf("%s %s %s", preg_replace('/[^A-Za-z0-9\-\ ]/', '', $this->opis),
+                    $description[$data[static::JEZYK]], $order->get_order_number()),
+                'crc' => $orderId,
+                'email' => $wcData['email'],
+                'nazwisko' => $wcData['first_name'] . ' ' . $wcData['last_name'],
+                'adres' => $wcData['address_1'] . ' ' . $wcData['address_2'],
+                'miasto' => $wcData['city'],
+                'kraj' => $wcData['country'],
+                'kod' => $wcData['postcode'],
+                'telefon' => str_replace(' ', '', $wcData['phone']),
+                'pow_url' => $this->get_return_url($order) . '&utm_nooverride=1',
+                'pow_url_blad' => $order->get_checkout_payment_url(),
+                'wyn_url' => $this->notify_link,
+                'module' => 'WooCommerce ' . $this->wpbo_get_woo_version_number(),
+            );
+            if (filter_input(INPUT_GET, 'regulamin') === "1") {
+                $data['akceptuje_regulamin'] = 1;
+            }
             if (filter_input(INPUT_GET, static::KANAL)) {
                 $data[static::KANAL] = (int)filter_input(INPUT_GET, static::KANAL);
             }
-            $data['module'] = 'WooCommerce ' . $this->wpbo_get_woo_version_number();
             foreach ($data as $key => $value) {
                 if (empty($value)) {
                     unset($data[$key]);
@@ -370,7 +370,7 @@ function initTpayGateway()
         public function sendPaymentData($data)
         {
             if (filter_input(INPUT_GET, static::BLIKCODE)) {
-                $kodblik = filter_input(INPUT_GET, static::BLIKCODE);
+                $blikCode = filter_input(INPUT_GET, static::BLIKCODE);
                 $data2 = $data;
                 $data2[static::KANAL] = 64;
                 $data2['akceptuje_regulamin'] = 1;
@@ -381,37 +381,35 @@ function initTpayGateway()
                     (string)$this->security_code
                 );
                 try {
-
                     $resp = $transactionAPI->create($data2);
                 } catch (TException $exception) {
                     return false;
                 }
                 $title = (string)$resp['title'];
-
                 try {
-                    $resp = $transactionAPI->blik($kodblik, $title);
+                    $resp = $transactionAPI->blik($blikCode, $title);
                 } catch (TException $exception) {
                     return false;
                 }
-
                 if ($resp['result'] === 1) {
                     $powUrl = $data['pow_url'];
-                    wp_redirect(esc_url($powUrl));
+                    header("Location: " . $powUrl);
+
                     return true;
                 } else {
                     $powUrl = $data['pow_url_blad'];
-                    wp_redirect(esc_url($powUrl));
+                    header("Location: " . $powUrl);
+
                     return false;
                 }
             } else {
-
                 try {
                     $paymentBasic = new PaymentBasic(
                         (int)$this->seller_id,
                         (string)$this->security_code
                     );
                     $form = $paymentBasic->getTransactionForm($data);
-                } catch (TException $exception) {
+                } catch (TException $exception) {var_dump($exception->getMessage());
                     return false;
                 }
                 echo $form;
@@ -430,95 +428,75 @@ function initTpayGateway()
                     (int)$this->seller_id,
                     (string)$this->security_code
                 );
+                if ($this->enable_IP_validation === false) {
+                    $paymentBasic->disableValidationServerIP();
+                }
                 $res = $paymentBasic->checkPayment(Validate::PAYMENT_TYPE_BASIC, $this->proxy_server);
             } catch (TException $exception) {
                 return;
             }
-
             $this->trId = $res['tr_id'];
-
-            if (($res['tr_status'] === 'TRUE')) {
-                if ($res[static::TR_ERROR] == 'none') {
-                    // transaction successful
-                    $this->completePayment($res[static::TR_CRC], static::SUCCESS, false);
-                } elseif ($res[static::TR_ERROR] == 'overpay') {
-                    // payment was bigger than required
-                    $this->completePayment($res[static::TR_CRC], static::SUCCESS, true);
-                } else {
-                    // transaction failed
-                    $this->completePayment($res[static::TR_CRC], static::FAILURE, false);
-                }
-            } else {
-                // transaction failed
-                $this->completePayment($res[static::TR_CRC], static::FAILURE, false);
-            }
-
+            $this->completePayment($res['tr_crc'], $res);
         }
 
         /**
          * Sets proper transaction status for order based on $status
-         * @param $orderId ; id of an order
-         * @param $status ; status of a transaction, enum : {success, failure}
-         * @param $overpay ; whether there was an overpay during payment
-         * @throws ;
+         * @param int $orderId ; id of an order
+         * @param array $notification
+         * @return bool
          */
-        public function completePayment($orderId, $status, $overpay)
+        private function completePayment($orderId, $notification)
         {
             try {
                 $order = new WC_Order($orderId);
+                if ($notification['tr_status'] === 'CHARGEBACK') {
+                    $order->update_status('refunded', 'Wykonano zwort z panelu sprzedawcy.', true);
 
-                if ($status == static::SUCCESS) {
-                    if ($overpay) {
-                        $order->add_order_note('Zapłacono z nadpłatą.');
-                    } else {
-                        $order->add_order_note('Zapłacono');
-                    }
-                    $order->payment_complete($this->trId);
-                    if ($this->autoFinish === 1) {
-                        $order->update_status('completed');
-                    }
-                } elseif ($status == static::FAILURE) {
-                    $reason = filter_input(INPUT_POST, 'reason') ? filter_input(INPUT_POST, 'reason') : "";
-                    $reason .= filter_input(INPUT_POST, 'err_desc') ? filter_input(INPUT_POST, 'err_desc') : "";
-                    $order->update_status('failed', __('Zapłata nie powiodła się. ' . $reason));
-                } else {
-                    throw new TException('Invalid payment type for tpay.com gateway');
+                    return true;
                 }
+                if ($notification['tr_error'] === 'overpay') {
+                    $order->add_order_note(__('Zapłacono z nadpłatą.'));
+                } elseif ($notification['tr_error'] === 'surcharge') {
+                    $order->add_order_note(__('Zapłacono z niedopłatą.'));
+                } elseif ($notification['tr_error'] === 'none') {
+                    $order->add_order_note(__('Zapłacono.'));
+                }
+                $order->payment_complete($this->trId);
+                if ($this->autoFinish === 1) {
+                    $order->update_status('completed');
+                }
+
+                return true;
             } catch (Exception $exception) {
-                Util::log('Exception in completing payment', $exception->getMessage());
-                return;
+                Util::log('Exception in completing payment', $exception->getMessage() . print_r($notification, true));
+
+                return false;
             }
-
         }
-
 
         public function process_payment($orderId)
         {
             global $woocommerce;
-            $order = new WC_Order($orderId);
-            // Reduce stock levels
-            function_exists('wc_reduce_stock_levels') ? wc_reduce_stock_levels($orderId) :
-                $order->reduce_order_stock();
             // Clear cart
             $woocommerce->cart->empty_cart();
             // Post data and redirect to tpay.com
             if (!filter_input(INPUT_POST, static::BLIKCODE) || (filter_input(INPUT_POST, static::BLIKCODE) === null)) {
                 return array(
-                    static::RESULT   => static::SUCCESS,
+                    static::RESULT => static::SUCCESS,
                     static::REDIRECT => add_query_arg(array(
                         static::REGULATIONS => filter_input(INPUT_POST, static::REGULATIONS),
-                        static::ORDER_ID    => $orderId,
-                        static::BLIKCODE    => filter_input(INPUT_POST, static::BLIKCODE),
-                        static::KANAL       => filter_input(INPUT_POST, static::KANAL),
+                        static::ORDER_ID => $this->crypt($orderId),
+                        static::BLIKCODE => filter_input(INPUT_POST, static::BLIKCODE),
+                        static::KANAL => filter_input(INPUT_POST, static::KANAL),
                     ), $this->notify_link)
                 );
             } else {
                 return array(
-                    static::RESULT   => static::SUCCESS,
+                    static::RESULT => static::SUCCESS,
                     static::REDIRECT => add_query_arg(array(
                         static::REGULATIONS => filter_input(INPUT_POST, static::REGULATIONS),
-                        static::ORDER_ID    => $orderId,
-                        static::BLIKCODE    => filter_input(INPUT_POST, static::BLIKCODE),
+                        static::ORDER_ID => $this->crypt($orderId),
+                        static::BLIKCODE => filter_input(INPUT_POST, static::BLIKCODE),
                     ), $this->notify_link)
                 );
             }
@@ -537,31 +515,81 @@ function initTpayGateway()
 
             try {
                 $transactionAPI->refundAny($order->get_transaction_id(), $amount);
+
                 return true;
             } catch (Exception $exception) {
                 Util::log('Exception in refunding payment', $exception->getMessage());
+
                 return false;
             }
 
         }
 
-        public function wpbo_get_woo_version_number() {
+        public function wpbo_get_woo_version_number()
+        {
             // If get_plugins() isn't available, require it
-            if ( ! function_exists( 'get_plugins' ) )
-                require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
+            if (!function_exists('get_plugins')) {
+                require_once(ABSPATH . 'wp-admin/includes/plugin.php');
+            }
 
             // Create the plugins folder and file variables
-            $plugin_folder = get_plugins( '/' . 'woocommerce' );
+            $plugin_folder = get_plugins('/' . 'woocommerce');
             $plugin_file = 'woocommerce.php';
 
             // If the plugin version number is set, return it
-            if ( isset( $plugin_folder[$plugin_file]['Version'] ) ) {
+            if (isset($plugin_folder[$plugin_file]['Version'])) {
                 return $plugin_folder[$plugin_file]['Version'];
 
             } else {
                 // Otherwise return null
-                return NULL;
+                return null;
             }
+        }
+        public function getShippingMethods()
+        {
+            if ($this->wpbo_get_woo_version_number() < '3.0.0') {
+                return array();
+            }
+            $options = array();
+            try {
+                $Shipping = new WC_Shipping();
+                $shippingMethods = $Shipping->get_shipping_methods();
+                foreach ($shippingMethods as $method) {
+                    if (isset($method->id) && isset($method->method_title)) {
+                        $options[$method->id] = $method->method_title;
+                    }
+                }
+            } catch (Exception $e) {
+                Util::log('Exception in getShippingMethods', print_r($e, true));
+            }
+
+            return $options;
+        }
+
+        public function isAvailableForShippingMethod($shippingMethods)
+        {
+            if (empty($shippingMethods)) {
+                return true;
+            }
+            $chosenShippingMethod = WC()->session->get('chosen_shipping_methods');
+            $valid = false;
+            foreach ($shippingMethods as $shippingMethod) {
+                if (strpos($chosenShippingMethod[0], $shippingMethod) !== false) {
+                    $valid = true;
+                }
+            }
+
+            return $valid;
+        }
+
+        private function crypt($string, $encrypt = true)
+        {
+            $iv = substr(md5($this->security_code), 16);
+            $encrypt_method = "AES-256-CBC";
+            $key = hash('sha256', $this->security_code);
+
+            return $encrypt ? base64_encode(openssl_encrypt($string, $encrypt_method, $key, 0, $iv)) :
+                openssl_decrypt(base64_decode($string), $encrypt_method, $key, 0, $iv);
         }
 
     }

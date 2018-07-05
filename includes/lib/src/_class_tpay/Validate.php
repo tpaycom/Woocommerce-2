@@ -482,7 +482,6 @@ class Validate
         'opis'                => array(
             self::REQUIRED   => true,
             self::VALIDATION => array(self::STRING, self::MAXLENGHT_128),
-            self::FILTER     => self::TEXT
         ),
         /**
          * The secondary parameter to the transaction identification.
@@ -760,7 +759,7 @@ class Validate
             self::REQUIRED   => true,
             self::TYPE       => self::STRING,
             self::VALIDATION => array(self::OPTIONS),
-            self::OPTIONS    => array(0, 1, true, false, 'TRUE', 'FALSE'),
+            self::OPTIONS    => array('TRUE', 'FALSE', 'CHARGEBACK'),
         ),
         /**
          * Transaction error status.
@@ -906,6 +905,16 @@ class Validate
          */
         'sale_auth'     => array(
             self::REQUIRED   => true,
+            self::TYPE       => self::STRING,
+            self::VALIDATION => array(self::STRING, self::MAXLENGHT_40)
+        ),
+        'cli_auth'     => array(
+            self::REQUIRED   => false,
+            self::TYPE       => self::STRING,
+            self::VALIDATION => array(self::STRING, self::MAXLENGHT_40)
+        ),
+        'sale_ref'     => array(
+            self::REQUIRED   => false,
             self::TYPE       => self::STRING,
             self::VALIDATION => array(self::STRING, self::MAXLENGHT_40)
         ),
@@ -1554,6 +1563,7 @@ class Validate
     private static function validateEmailList($value, $name)
     {
         if (!is_string($value)) {
+            Util::log('wrong email', print_r($value, true));
             throw new TException(sprintf('Field "%s" must be a string', $name));
         }
         $emails = explode(',', $value);
@@ -1653,7 +1663,7 @@ class Validate
             'letters'       => '/[^A-Za-z]/',
             'mixed'         => '/[^A-Za-z0-9]/',
             'date'          => '/[^0-9 \-:]/',
-            self::TEXT      => '/[^\-\p{Latin}A-Za-z0-9 \.,#_()\/\!]/u',
+            self::TEXT      => '/[^\-\p{Latin}A-Za-z0-9 \.,#_*&()\/\!]/u',
             'name'          => '/[^\-\p{Latin} ]/u',
             'sign'          => '/[^A-Za-z!\., _\-0-9]/'
         );

@@ -21,7 +21,7 @@ if ((isset($_SERVER['HTTP_X_FORWARDED_PROTO']) || isset($_SERVER['HTTPS']))
 <script type="text/javascript" src="<?php echo $path ?>../lib/src/common/_js/jsencrypt.min.js"></script>
 <script type="text/javascript" src="<?php echo $path ?>../lib/src/common/_js/string_routines.js"></script>
 <script type="text/javascript" src="<?php echo $path ?>../_js/visibilityChangesHandler.js?3"></script>
-<script type="text/javascript" src="<?php echo $path ?>../_js/tpayCards.js?49"></script>
+<script type="text/javascript" src="<?php echo $path ?>../_js/tpayCards.js?51"></script>
 <link rel="stylesheet" href="<?php echo $path ?>../lib/src/common/_css/style.css?12">
 
 <input type="hidden" name="carddata" id="card_data" value=""/>
@@ -31,7 +31,7 @@ if ((isset($_SERVER['HTTP_X_FORWARDED_PROTO']) || isset($_SERVER['HTTPS']))
     <div id="powered_by"></div>
     <div id="card_payment">
         <label for="card_number"><?php tpay\Lang::l('card_number') ?></label>
-        <input id="card_number" pattern="\d*" autocompletetype="cc-number" size="30" type="tel" autocomplete="off"
+        <input id="card_number" autocompletetype="cc-number" size="30" type="tel" autocomplete="off"
                maxlength="23" placeholder="0000 0000 0000 0000" tabindex="1" value=""/>
 
         <div id="expiry_date_wrapper">
@@ -47,7 +47,6 @@ if ((isset($_SERVER['HTTP_X_FORWARDED_PROTO']) || isset($_SERVER['HTTPS']))
         </div>
 
         <input type="hidden" name="tpayID" value="<?php echo $this->midId; ?>">
-
     </div>
 
     <div id="card_icons">
@@ -58,7 +57,19 @@ if ((isset($_SERVER['HTTP_X_FORWARDED_PROTO']) || isset($_SERVER['HTTPS']))
         <div class="card_icon" id="jcb"></div>
         <div class="card_icon" id="amex"></div>
     </div>
+    <div id="termsCheckboxBox">
+        <br/>
+        <input id="tpay-cards-accept-regulations-checkbox" type="checkbox" name="regulations" style="
+    text-align: right;
+    float:left;">
+        <label for="tpay-cards-accept-regulations-checkbox" style="display: inline">
 
+            <?php tpay\Lang::l('accept') ?> <a href="<?php echo $data['regulation_url'] ?>"
+                                               target="_blank"><?php tpay\Lang::l('regulations_url') ?></a>
+            <?php tpay\Lang::l('regulations'); ?>
+        </label>
+
+    </div>
     <p id="info_msg_not_supported" style="display: none"><?php tpay\Lang::l('not_supported_card') ?></p>
     <p id="info_msg_invalid" style="visibility: hidden"><?php tpay\Lang::l('invalid_card') ?></p>
 

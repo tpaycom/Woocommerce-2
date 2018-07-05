@@ -1700,14 +1700,14 @@ jQuery(function ($) {
         }
 
         function enablePayment() {
-            var x = true, cn = $('#card_number').val(), ed = $('#expiry_date').val(), cvc = $('#cvc').val();
+            var x = true, cn = $('#card_number').val(), ed = $('#expiry_date').val(), cvc = $('#cvc').val(), regulations = document.getElementById('tpay-cards-accept-regulations-checkbox').checked;
             $('input').each(function () {
                 if ($(this).hasClass('wrong')) {
                     x = false;
                     $("#place_order").attr("disabled", "disabled");
                 }
             });
-            if (cn.length === 0 || ed.length === 0 || cvc.length === 0) {
+            if (cn.length === 0 || ed.length === 0 || cvc.length === 0 || regulations === false) {
                 x = false;
             }
             if (x) {
@@ -1782,6 +1782,16 @@ jQuery(function ($) {
 
         $('input#expiry_date').formance('format_credit_card_expiry').on('keyup change blur', function (event) {
             if (!$(this).formance('validate_credit_card_expiry')) {
+                $(this).addClass('wrong');
+                setWrong(this);
+                goon = false;
+            } else {
+                $(this).removeClass('wrong').removeAttr('style');
+                enablePayment();
+            }
+        });
+        $('input#tpay-cards-accept-regulations-checkbox').change(function () {
+            if (!$(this).is(':checked')) {
                 $(this).addClass('wrong');
                 setWrong(this);
                 goon = false;

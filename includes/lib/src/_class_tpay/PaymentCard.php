@@ -212,7 +212,7 @@ class PaymentCard
         Util::log('card handle notification', print_r($_POST, true));
 
         $notificationType = Util::post('type', static::STRING);
-        if ($notificationType === 'sale') {
+        if ($notificationType === 'sale' || $notificationType === 'refund') {
             $response = Validate::getResponse(Validate::PAYMENT_TYPE_CARD);
         } elseif ($notificationType === 'deregister') {
             $response = Validate::getResponse(Validate::CARD_DEREGISTER);
@@ -226,17 +226,24 @@ class PaymentCard
 
         echo json_encode(array(static::RESULT => '1'));
 
-        if ($notificationType === 'sale' && $response['status'] === 'correct') {
+        if ($notificationType === 'sale' || $notificationType === 'refund') {
             $resp = array(
+                'type'            => $notificationType,
                 static::ORDERID   => $response[static::ORDERID],
                 'sign'            => $response['sign'],
                 static::SALE_AUTH => $response[static::SALE_AUTH],
                 'date'            => $response['date'],
-                'card'            => $response['card']
+                'card'            => $response['card'],
+                'status'          => $response['status'],
             );
             if (isset($response['test_mode'])) {
-
                 $resp['test_mode'] = $response['test_mode'];
+            }
+            if (isset($response['cli_auth'])) {
+                $resp['cli_auth'] = $response['cli_auth'];
+            }
+            if (isset($response['sale_ref'])) {
+                $resp['sale_ref'] = $response['sale_ref'];
             }
             return $resp;
         } elseif ($notificationType === 'deregister') {
@@ -470,14 +477,18 @@ class PaymentCard
      * merchant and tpay system.
      *
      * @param string $sign
-     * @param string $testMode
      * @param string $saleAuth
-     * @param string $orderId
      * @param string $card
      * @param float $amount
      * @param string $saleDate
+     * @param $status
      * @param string $currency
-     *
+     * @param string $testMode
+     * @param string $orderId
+     * @param string $type
+     * @param string $saleRef
+     * @param string $cliAuth
+     * @param string $reason
      * @throws TException
      */
     public function validateSign(
@@ -490,15 +501,20 @@ class PaymentCard
         $currency = '985',
         $testMode = '',
         $orderId = '',
-        $sale = 'sale',
+        $type = 'sale',
+        $saleRef = '',
         $cliAuth = '',
         $reason = ''
     ) {
-        $hash = hash($this->hashAlg, $sale . $testMode . $saleAuth . $orderId . $cliAuth . $card .
+        $hash = hash($this->hashAlg, $type . $testMode . $saleAuth . $saleRef . $orderId . $cliAuth . $card .
             $currency . $amount . $saleDate . $status . $reason . $this->code);
 
         if ($sign !== $hash) {
+            Util::log('sum', $type . $testMode . $saleAuth . $saleRef . $orderId . $cliAuth . $card .
+                $currency . $amount . $saleDate . $status . $reason . $this->code);
+            Util::log('type', $type);
             throw new TException('Card payment - invalid checksum');
+
         }
     }
 

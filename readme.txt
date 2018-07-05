@@ -3,8 +3,8 @@ Contributors: tpay.com
 Donate link: https://tpay.com/
 Tags: woocommerce, tpay, payment, polish gateway, polska brama płatności, bramka płatności, płatności internetowe
 Requires at least: 2.0.0
-Tested up to: 4.9.1
-Stable tag: 2.5.3
+Tested up to: 4.9.6
+Stable tag: 2.6.42
 License: GPLv2
 Accept payments from all major polish banks directly on your WooCommerce site via tpay.com polish payment gateway system.
 
@@ -74,7 +74,7 @@ b)	Wyślij cały folder  do katalogu wp-content/plugins znajdującego się w Two
 
 = Testy =
 
-Moduł był testowany na systemie zbudowanym z wersji Woocommerce 3.2.6 i Wordpress 4.9.1.
+Moduł był testowany na systemie zbudowanym z wersji Woocommerce 3.4.3 i Wordpress 4.9.4.
 
 
 = KONTAKT =
@@ -82,6 +82,35 @@ Moduł był testowany na systemie zbudowanym z wersji Woocommerce 3.2.6 i Wordpr
 W razie potrzeby odpowiedzi na pytania powstałe podczas lektury lub szczegółowe wyjaśnienie kwestii technicznych prosimy o kontakt poprzez formularz znajdujący się w Panelu Odbiorcy lub na adres e-mail: pt@tpay.com
 
 == Changelog ==
+v2.6.42
+Zabezpieczenie przed wyjątkami w pobieraniu metod wysyłki
+v2.6.41
+Zabezpieczenie przed wyjątkami w pobieraniu metod wysyłki
+Rozpoznawanie języka w opisie transakcji
+v2.6.4
+Aktualizacja kompatybilności ze starszymi wersjami Woocommerce
+v2.6.3
+Dodano parowanie metody płatności z metodą wysyłki.
+Zaktualizowano bibliotekę szyfrującą dane karty.
+v2.6.2
+Poprawiony błędny link w formularzu płatności kartą.
+v.2.6.1
+Poprawiono błąd zwracany przy odrzuconej płatności kartowej bez 3DS.
+v2.6.0
+Poprawiono przekierowania na uszkodzone adresy URL stron sukcesu i niepowodzenia.
+v2.5.9
+Zmodyfikowano wyświetlanie kanału Raty
+Usunięto nadpisanie CSS zaznaczenia tekstu
+v2.5.8
+Zmodyfikowano zarządzanie stanem magazynowym. Zmieniono stronę błędu na adres ponawiania zapłaty.
+v2.5.7
+Wyłączono wyświetlanie regulaminu w trybie przekierowania do panelu transakcyjnego.
+v2.5.6
+Rozwiązano problem z autokorektą wprowadzanego numeru karty kredytowej
+v2.5.5
+Dodano możliwość wyłączenia walidacji IP serwera powiadomień
+v2.5.4
+Rozwiązano konflikt z PHP 7.1
 v2.5.3
 Dodano zbieranie statystyk modułu
 v2.5.2

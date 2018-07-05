@@ -144,18 +144,6 @@ td {
     box-sizing: border-box;
 }
 
-::-moz-selection {
-    background: #fcd700;
-    color: #fff;
-    text-shadow: none;
-}
-
-::selection {
-    background: #fcd700;
-    color: #fff;
-    text-shadow: none;
-}
-
 ins {
     background-color: #fcd700;
     color: #000;

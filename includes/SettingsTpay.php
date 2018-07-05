@@ -29,7 +29,7 @@ class SettingsTpay
 
     const DESC_TIP = 'desc_tip';
 
-    public function getSettings($charge, $list, $tiles)
+    public function getSettings($charge, $list, $tiles, $shippingSettings)
     {
         $ukryjD = static::VISIBILITY_VISIBLE;
         $ukryjK = static::VISIBILITY_VISIBLE;
@@ -157,6 +157,19 @@ class SettingsTpay
                     '1' => __('Lista', static::WOOCOMMERCE),
                 ),
             ),
+            'shipping_methods' => array(
+                'title'             => __('Włącz dla wysyłki - opcja dostępna dla Woocommerce w wersji 3.0 lub wyższej', 'woocommerce'),
+                'type'              => 'multiselect',
+                'class'             => 'wc-enhanced-select',
+                'css'               => 'width: 400px;',
+                'default'           => '',
+                'description'       => __('Wybierz metody wysyłki dla których chcesz włączyć płatności. Jeśli dla wszystkich, pozostaw to pole puste.', 'woocommerce'),
+                'options'           => $shippingSettings,
+                'desc_tip'          => true,
+                'custom_attributes' => array(
+                    'data-placeholder' => __('Wybierz metody wysyłki', 'woocommerce'),
+                ),
+            ),
             'auto_finish_order'         => array(
                 static::TITLE           => __('Automatycznie oznaczaj zamówienie jako zrealizowane', static::WOOCOMMERCE),
                 static::TYPE            => static::SELECT,
@@ -175,6 +188,15 @@ class SettingsTpay
                     1 => __('TAK', static::WOOCOMMERCE),
                 ),
             ),
+            'enable_IP_validation'      => array(
+                static::TITLE           => __('Weryfikuj adres serwera powiadomień (zalecane)', static::WOOCOMMERCE),
+                static::TYPE            => static::SELECT,
+                static::DEFAULT_SETTING => 1,
+                static::OPTIONS         => array(
+                    1 => __('TAK', static::WOOCOMMERCE),
+                    0 => __('NIE', static::WOOCOMMERCE),
+                ),
+            ),
             'documentation'     => array(
                 static::TITLE       => __('Dokumentacja techniczna', static::WOOCOMMERCE),
                 static::TYPE        => static::TITLE,
@@ -184,4 +206,3 @@ class SettingsTpay
         );
     }
 }
-

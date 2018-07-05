@@ -125,9 +125,9 @@ class PaymentBasic
      *
      * @param string $paymentType optional payment type default is 'basic'
      *
-     * @throws TException
-     *
+     * @param bool $proxy
      * @return array
+     * @throws TException
      */
     public function checkPayment($paymentType = Validate::PAYMENT_TYPE_BASIC, $proxy)
     {
@@ -180,17 +180,22 @@ class PaymentBasic
     /**
      * Check if request is called from secure tpay server
      *
+     * @param bool $proxy
      * @return bool
      */
     private function checkServer($proxy)
     {
-        if ((bool)$proxy && isset($_SERVER['HTTP_X_FORWARDED_FOR'])
-            && in_array($_SERVER['HTTP_X_FORWARDED_FOR'], $this->secureIP)) {
-                return true;
-        }
+        if (($proxy)
+           &&
+           ((isset($_SERVER['HTTP_X_FORWARDED_FOR']) && in_array($_SERVER['HTTP_X_FORWARDED_FOR'], $this->secureIP))
+           ||
+           (isset($_SERVER['HTTP_CF_CONNECTING_IP']) && in_array($_SERVER['HTTP_CF_CONNECTING_IP'], $this->secureIP))))
+           {
+               return true;
+           }
 
-        return isset($_SERVER[static::REMOTE_ADDR]) && in_array($_SERVER[static::REMOTE_ADDR], $this->secureIP) ?
-            true : false;
+        return (isset($_SERVER[static::REMOTE_ADDR]) && in_array($_SERVER[static::REMOTE_ADDR], $this->secureIP))
+            ? true : false;
     }
 
     /**
