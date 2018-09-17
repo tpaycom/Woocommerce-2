@@ -180,22 +180,27 @@ class PaymentBasic
     /**
      * Check if request is called from secure tpay server
      *
-     * @param bool $proxy
+     * @param bool $allowProxy
      * @return bool
      */
-    private function checkServer($proxy)
+    private function checkServer($allowProxy)
     {
-        if (($proxy)
-           &&
-           ((isset($_SERVER['HTTP_X_FORWARDED_FOR']) && in_array($_SERVER['HTTP_X_FORWARDED_FOR'], $this->secureIP))
-           ||
-           (isset($_SERVER['HTTP_CF_CONNECTING_IP']) && in_array($_SERVER['HTTP_CF_CONNECTING_IP'], $this->secureIP))))
-           {
-               return true;
-           }
+        if (isset($_SERVER[static::REMOTE_ADDR]) && in_array($_SERVER[static::REMOTE_ADDR], $this->secureIP)) {
+            return true;
+        }
+        if ($allowProxy && isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            $proxyIps = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+            if (in_array($proxyIps[0], $this->secureIP)) {
+                return true;
+            }
+        }
+        if ($allowProxy && isset($_SERVER['HTTP_CF_CONNECTING_IP']) && in_array($_SERVER['HTTP_CF_CONNECTING_IP'],
+                $this->secureIP)
+        ) {
+            return true;
+        }
 
-        return (isset($_SERVER[static::REMOTE_ADDR]) && in_array($_SERVER[static::REMOTE_ADDR], $this->secureIP))
-            ? true : false;
+        return false;
     }
 
     /**
