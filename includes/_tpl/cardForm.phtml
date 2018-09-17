@@ -8,12 +8,12 @@
  */
 
 $path = plugin_dir_url(__FILE__);
-if ((isset($_SERVER['HTTP_X_FORWARDED_PROTO']) || isset($_SERVER['HTTPS']))
-    && (($_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https' || $_SERVER['HTTPS'] === 'on')) || is_ssl()
+if (
+    (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+    || (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on')
+    || is_ssl()
 ) {
-
     $path = str_replace('http://', 'https://', $path);
-
 }
 ?>
 

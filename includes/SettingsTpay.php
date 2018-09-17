@@ -29,7 +29,7 @@ class SettingsTpay
 
     const DESC_TIP = 'desc_tip';
 
-    public function getSettings($charge, $list, $tiles, $shippingSettings)
+    public function getSettings($charge, $list, $tiles, $shippingSettings = array())
     {
         $ukryjD = static::VISIBILITY_VISIBLE;
         $ukryjK = static::VISIBILITY_VISIBLE;
@@ -158,7 +158,7 @@ class SettingsTpay
                 ),
             ),
             'shipping_methods' => array(
-                'title'             => __('Włącz dla wysyłki - opcja dostępna dla Woocommerce w wersji 3.0 lub wyższej', 'woocommerce'),
+                'title'             => __('Włącz dla wysyłki - opcja niedostępna w niektórych instalacjach Woocommerce', 'woocommerce'),
                 'type'              => 'multiselect',
                 'class'             => 'wc-enhanced-select',
                 'css'               => 'width: 400px;',

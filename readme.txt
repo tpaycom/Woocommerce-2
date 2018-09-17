@@ -3,8 +3,8 @@ Contributors: tpay.com
 Donate link: https://tpay.com/
 Tags: woocommerce, tpay, payment, polish gateway, polska brama płatności, bramka płatności, płatności internetowe
 Requires at least: 2.0.0
-Tested up to: 4.9.6
-Stable tag: 2.6.42
+Tested up to: 4.9.8
+Stable tag: 2.6.51
 License: GPLv2
 Accept payments from all major polish banks directly on your WooCommerce site via tpay.com polish payment gateway system.
 
@@ -74,7 +74,7 @@ b)	Wyślij cały folder  do katalogu wp-content/plugins znajdującego się w Two
 
 = Testy =
 
-Moduł był testowany na systemie zbudowanym z wersji Woocommerce 3.4.3 i Wordpress 4.9.4.
+Moduł był testowany na systemie zbudowanym z wersji Woocommerce 3.4.4 i Wordpress 4.9.8.
 
 
 = KONTAKT =
@@ -82,6 +82,22 @@ Moduł był testowany na systemie zbudowanym z wersji Woocommerce 3.4.3 i Wordpr
 W razie potrzeby odpowiedzi na pytania powstałe podczas lektury lub szczegółowe wyjaśnienie kwestii technicznych prosimy o kontakt poprzez formularz znajdujący się w Panelu Odbiorcy lub na adres e-mail: pt@tpay.com
 
 == Changelog ==
+v2.6.51
+Usunięto zdublowane wyświetlanie informacji o prowizji za płatność
+v2.6.50
+Wyświetlanie bramki płatności kartami w języku polskim i angielskim
+v2.6.47
+Poprawiono kompatybilność z edytorem menu
+v2.6.46
+Naprawiono konflikt z przestarzałą metodą wysyłki local_pickup
+v2.6.45
+Poprawki kodu źródłowego
+v2.6.44
+Dodano zabezpieczenie przed błędami pobierania listy dostępnych metod wysyłki
+v2.6.43
+Dodano logowanie błędów BLIK
+Dodano automatycznie przekierowanie do panelu transakcyjnego w przypadku błędnego kodu blik
+Dodano zabezpieczenie przed błędami pobierania listy dostępnych metod wysyłki
 v2.6.42
 Zabezpieczenie przed wyjątkami w pobieraniu metod wysyłki
 v2.6.41

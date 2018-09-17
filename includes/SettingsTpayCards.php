@@ -31,7 +31,7 @@ class SettingsTpayCards
 
     const HTTPS = 'https:';
 
-    public function getSettings($shippingSettings)
+    public function getSettings($shippingSettings = array())
     {
         if ((isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
             || (is_ssl())
@@ -65,7 +65,7 @@ class SettingsTpayCards
                 static ::DESC_TIP => true,
             ),
             'shipping_methods' => array(
-                'title'             => __('Włącz dla wysyłki - opcja dostępna dla Woocommerce w wersji 3.0 lub wyższej', 'woocommerce'),
+                'title'             => __('Włącz dla wysyłki - opcja niedostępna w niektórych instalacjach Woocommerce', 'woocommerce'),
                 'type'              => 'multiselect',
                 'class'             => 'wc-enhanced-select',
                 'css'               => 'width: 400px;',

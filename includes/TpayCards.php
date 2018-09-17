@@ -119,6 +119,9 @@ class WC_Gateway_Tpay_Cards extends WC_Payment_Gateway
         include_once 'SettingsTpayCards.php';
         $settingsTpay = new SettingsTpayCards();
         $shippingSettings = $this->basicClass->getShippingMethods();
+        if (!is_array($shippingSettings)) {
+            $shippingSettings = array();
+        }
         $this->form_fields = $settingsTpay->getSettings($shippingSettings);
     }
 
@@ -377,26 +380,7 @@ class WC_Gateway_Tpay_Cards extends WC_Payment_Gateway
 
     public function payment_fields()
     {
-        $fee = (int)$this->doplata;
-        $feeAmount = (float)$this->kwota_doplaty;
-        $currency = get_woocommerce_currency();
-
-        switch ($fee) {
-            case 1:
-                Lang::l('fee_info');
-                echo " <b> " . number_format($feeAmount, 2) . $currency . " </b><br/><br/>";
-                break;
-            case 2:
-                $kwota = WC()->cart->cart_contents_total + WC()->cart->shipping_total;
-                $kwota = $kwota * $feeAmount / 100;
-                $kwota = doubleval($kwota);
-                $kwota = number_format($kwota, 2);
-                Lang::l('fee_info');
-                echo "<b>" . $kwota . $currency . "</b><br/><br/>";
-                break;
-            default:
-                break;
-        }
+        strcmp(get_locale(), "pl_PL") == 0 ? Lang::setLang('pl') : Lang::setLang('en');
         $data['regulation_url'] = 'https://secure.tpay.com/regulamin.pdf';
         include_once "_tpl/cardForm.phtml";
     }
