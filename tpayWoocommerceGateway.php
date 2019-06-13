@@ -11,7 +11,7 @@
  * Description: Brama płatności tpay.com do WooCommerce.
  * Author: tpay.com
  * Author URI: http://www.tpay.com
- * Version: 2.6.51
+ * Version: 2.7.9
  */
 use tpay\Lang;
 use tpay\PaymentBasic;
@@ -21,9 +21,41 @@ use tpay\Util;
 use tpay\Validate;
 
 add_action('plugins_loaded', 'initTpayGateway');
+register_activation_hook(__FILE__, 'installDatabase');
+
+function installDatabase()
+{
+    global $wpdb;
+    require_once(ABSPATH.'wp-admin/includes/upgrade.php');
+    $charset_collate = $wpdb->get_charset_collate();
+    $sql = "CREATE TABLE `".$wpdb->prefix."woocommerce_tpay` (
+  id mediumint(9) NOT NULL AUTO_INCREMENT,
+  wooId mediumint(9) NOT NULL,
+  midId mediumint(9) NOT NULL,
+  client_language VARCHAR(2) NOT NULL DEFAULT 'pl'
+  PRIMARY KEY  (id)
+) $charset_collate;";
+    dbDelta($sql);
+
+    $sql = "CREATE TABLE `".$wpdb->prefix."woocommerce_tpay_clients` (
+  id mediumint(9) NOT NULL AUTO_INCREMENT,
+  clientId mediumint(9) NOT NULL,
+  cliAuth varchar(40) NOT NULL,
+  cardNoShort varchar(20) NOT NULL,
+  midId mediumint(9) NOT NULL,
+  PRIMARY KEY  (id)
+) $charset_collate;";
+    dbDelta($sql);
+}
 
 function initTpayGateway()
 {
+    $new_tpay_db_version = '1.2';
+    $current_tpay_db_version = get_option("tpay_db_version");
+    if ($new_tpay_db_version !== $current_tpay_db_version) {
+        installDatabase();
+        update_option("tpay_db_version", $new_tpay_db_version);
+    }
 
     if (!class_exists('WC_Payment_Gateway')) {
         add_action('admin_init', 'childPluginHasParentPlugin');
@@ -106,24 +138,10 @@ function initTpayGateway()
             $this->init_form_fields();
             $this->init_settings();
             // Define user set variables
-            $this->title = $this->get_option('title');
-            $this->opis = $this->get_option('opis');
-            $this->kwota_doplaty = $this->get_option(static::KWOTA_DOPLATY);
-            $this->description = $this->get_option('description');
-            $this->seller_id = $this->get_option('seller_id');
-            $this->security_code = $this->get_option('security_code');
-            $this->bank_list = $this->get_option(static::BANK_LIST);
-            $this->doplata = $this->get_option(static::DOPLATA);
-            $this->blik_on = $this->get_option('blik_on');
-            $this->api_key = $this->get_option('api_key');
-            $this->api_pass = $this->get_option('api_pass');
-            $this->proxy_server = (bool)(int)$this->get_option('proxy_server');
-            $this->enable_IP_validation = (bool)(int)$this->get_option('enable_IP_validation');
-            $this->autoFinish = (int)$this->get_option('auto_finish_order');
-            $this->shipping_methods = $this->get_option('shipping_methods', array());
+            $this->setConfig();
             if (!empty($this->api_key) && !empty($this->api_pass)) {
                 $this->supports = array(
-                    'refunds'
+                    'refunds',
                 );
             }
             // Actions
@@ -203,15 +221,13 @@ function initTpayGateway()
          */
         public function payment_fields()
         {
-            strcmp(get_locale(), "pl_PL") == 0 ? Lang::setLang('pl') : Lang::setLang('en');
-            $orderAmount = WC()->cart->get_cart_total();
+            strcmp(get_locale(), "pl_PL") === 0 ? Lang::setLang('pl') : Lang::setLang('en');
+            $orderAmount = $this->getCartTotal();
             $data['merchant_id'] = $this->seller_id;
+            $data['online'] = $this->online_methods_only;
             $data['show_regulations_checkbox'] = true;
             $data['regulation_url'] = 'https://secure.tpay.com/regulamin.pdf';
             $data['form'] = '';
-            echo '<style>';
-            include_once 'includes/lib/src/common/_css/style.css';
-            echo '</style>';
             echo $this->description;
             if ($this->blikOn() && $orderAmount >= 1) {
                 $data['static_files_url'] = $this->pluginUrl.'/includes/';
@@ -225,7 +241,7 @@ function initTpayGateway()
             }
             echo '<input type="hidden" name="regulamin" id="tpay-regulations-input" value="0">';
             echo '<input type="hidden" id="tpay-payment-submit">';
-            $showInstallments = $orderAmount >= 300 && $orderAmount <= 4830 ? 'true' : 'false';
+            $showInstallments = $orderAmount >= 300 && $orderAmount <= 9259 ? 'true' : 'false';
             if ($this->paymentType() == 1 || $this->paymentType() == 2) {
                 $templateName = $this->paymentType() == 1 ? 'bankSelection' : 'bankSelectionList';
                 echo '<input type="hidden" name="kanal" id="tpay-channel-input" value=" ">';
@@ -301,21 +317,22 @@ function initTpayGateway()
             $order = wc_get_order($orderId);
             $wcData = $order->get_address();
             if (strcmp(get_locale(), "pl_PL") == 0) {
-                $data[static::JEZYK] = "PL";
+                $language = 'pl';
             } elseif (strcmp(get_locale(), "de_DE") == 0) {
-                $data[static::JEZYK] = "DE";
+                $language = 'de';
             } else {
-                $data[static::JEZYK] = "EN";
+                $language = 'en';
             }
             $description = array(
-                'PL' => 'Zamówienie nr',
-                'EN' => 'Order no',
-                'DE' => 'Bestellnr',
+                'pl' => 'Zamówienie nr',
+                'en' => 'Order no',
+                'de' => 'Bestellnr',
             );
             $data = array(
                 'kwota' => $order->get_total(),
                 'opis' => sprintf("%s %s %s", preg_replace('/[^A-Za-z0-9\-\ ]/', '', $this->opis),
-                    $description[$data[static::JEZYK]], $order->get_order_number()),
+                    $description[$language], $order->get_order_number()),
+                'jezyk' => $language,
                 'crc' => $orderId,
                 'email' => $wcData['email'],
                 'nazwisko' => $wcData['first_name'].' '.$wcData['last_name'],
@@ -329,11 +346,14 @@ function initTpayGateway()
                 'wyn_url' => $this->notify_link,
                 'module' => 'WooCommerce '.$this->wpbo_get_woo_version_number(),
             );
+            if ($this->online_methods_only === 1) {
+                $data['online'] = 1;
+            }
             if (filter_input(INPUT_GET, 'regulamin') === "1") {
                 $data['akceptuje_regulamin'] = 1;
             }
             if (filter_input(INPUT_GET, static::KANAL)) {
-                $data[static::KANAL] = (int)filter_input(INPUT_GET, static::KANAL);
+                $data['grupa'] = (int)filter_input(INPUT_GET, static::KANAL);
             }
             foreach ($data as $key => $value) {
                 if (empty($value)) {
@@ -347,10 +367,16 @@ function initTpayGateway()
         public function sendPaymentData($data)
         {
             if (filter_input(INPUT_GET, static::BLIKCODE)) {
+                $data['adres'] = null;
                 $blikCode = filter_input(INPUT_GET, static::BLIKCODE);
-                $data2 = $data;
-                $data2[static::KANAL] = 64;
-                $data2['akceptuje_regulamin'] = 1;
+                $optionalParameters = array('adres', 'miasto', 'kraj', 'jezyk', 'kod', 'telefon');
+                foreach ($optionalParameters as $optionalParameter) {
+                    if (array_key_exists($optionalParameter, $data) && empty($data[$optionalParameter])) {
+                        unset($data[$optionalParameter]);
+                    }
+                }
+                $data[static::KANAL] = 64;
+                $data['akceptuje_regulamin'] = 1;
                 try {
                     $transactionAPI = new TransactionAPI(
                         (string)$this->api_key,
@@ -358,7 +384,7 @@ function initTpayGateway()
                         (int)$this->seller_id,
                         (string)$this->security_code
                     );
-                    $resp = $transactionAPI->create($data2);
+                    $resp = $transactionAPI->create($data);
                     $title = (string)$resp['title'];
                     $resp = $transactionAPI->blik($blikCode, $title);
                 } catch (TException $exception) {
@@ -438,11 +464,11 @@ function initTpayGateway()
                 }
 
                 if ($notification['tr_error'] === 'overpay') {
-                    $order->add_order_note(__('Zapłacono z nadpłatą.'));
+                    $order->add_order_note(__('Zapłacono z nadpłatą.', static::WOOCOMMERCE));
                 } elseif ($notification['tr_error'] === 'surcharge') {
-                    $order->add_order_note(__('Zapłacono z niedopłatą.'));
+                    $order->add_order_note(__('Zapłacono z niedopłatą.', static::WOOCOMMERCE));
                 } elseif ($notification['tr_error'] === 'none') {
-                    $order->add_order_note(__('Zapłacono.'));
+                    $order->add_order_note(__('Zapłacono.', static::WOOCOMMERCE));
                 }
                 $order->payment_complete($this->trId);
                 if ($this->autoFinish === 1) {
@@ -457,9 +483,33 @@ function initTpayGateway()
             }
         }
 
+        private function isValidBlikCode($code)
+        {
+            if (strlen($code) !== 6 || !is_numeric($code)) {
+                return false;
+            }
+
+            return true;
+        }
+
         public function process_payment($orderId)
         {
             global $woocommerce;
+            if (
+                isset($_POST[static::BLIKCODE])
+                && strlen($_POST[static::BLIKCODE]) > 0
+                && $this->isValidBlikCode($_POST[static::BLIKCODE]) === false
+            ) {
+                wc_add_notice(
+                    __(
+                        'Wprowadzony kod BLIK jest niepoprawny. Kod powinien składać się z sześciu cyfr.',
+                        static::WOOCOMMERCE
+                    ),
+                    'error'
+                );
+
+                return array(static::RESULT => 'fail');
+            }
             // Clear cart
             $woocommerce->cart->empty_cart();
             // Post data and redirect to tpay.com
@@ -521,17 +571,24 @@ function initTpayGateway()
 
         public function getShippingMethods()
         {
-            $canUse = false;
-            $outdatedSettings = get_option('woocommerce_local_pickup_settings');
-            if (isset($outdatedSettings['enabled']) && $outdatedSettings['enabled'] === 'no') {
-                $canUse = true;
-            }
-            if ($outdatedSettings === false) {
-                $canUse = true;
+            $canUse = true;
+            $outdatedSettingsList = array(
+                'legacy_flat_rate',
+                'woocommerce_local_pickup_settings',
+                'woocommerce_flat_rate_settings',
+                'woocommerce_free_shipping_settings',
+                'woocommerce_international_delivery_settings',
+                'woocommerce_local_delivery_settings',
+            );
+            foreach ($outdatedSettingsList as $setting) {
+                $settings = get_option($setting);
+                if (isset($settings['enabled']) && $settings['enabled'] !== 'no') {
+                    $canUse = false;
+                }
             }
             $options = array();
-            if (class_exists('WC_Shipping') && $canUse) {
-                $Shipping = new WC_Shipping();
+            if (class_exists('WC_Shipping', false) && $canUse) {
+                $Shipping = WC()->shipping();
                 if (method_exists($Shipping, 'get_shipping_methods')) {
                     try {
                         $shippingMethods = $Shipping->get_shipping_methods();
@@ -557,8 +614,13 @@ function initTpayGateway()
             }
             $chosenShippingMethod = WC()->session->get('chosen_shipping_methods');
             $valid = false;
+            if (is_array($chosenShippingMethod)) {
+                foreach ($chosenShippingMethod as $methodKey => $methodName) {
+                    $chosenShippingMethod = $methodName;
+                }
+            }
             foreach ($shippingMethods as $shippingMethod) {
-                if (strpos($chosenShippingMethod[0], $shippingMethod) !== false) {
+                if (is_string($chosenShippingMethod) && strpos($chosenShippingMethod, $shippingMethod) !== false) {
                     $valid = true;
                 }
             }
@@ -574,6 +636,40 @@ function initTpayGateway()
 
             return $encrypt ? base64_encode(openssl_encrypt($string, $encrypt_method, $key, 0, $iv)) :
                 openssl_decrypt(base64_decode($string), $encrypt_method, $key, 0, $iv);
+        }
+
+        private function getCartTotal()
+        {
+            if ($this->wpbo_get_woo_version_number() >= '3.2') {
+                $totalTax = WC()->cart->get_cart_contents_tax();
+                $totalFee = WC()->cart->get_fee_total();
+                $totalProducts = WC()->cart->get_cart_contents_total();
+                $orderAmount = $totalProducts + $totalFee + $totalTax;
+            } else {
+                $orderAmount = WC()->cart->get_cart_total();
+            }
+
+            return $orderAmount;
+        }
+
+        private function setConfig()
+        {
+            $this->title = $this->get_option('title');
+            $this->opis = $this->get_option('opis');
+            $this->kwota_doplaty = $this->get_option(static::KWOTA_DOPLATY);
+            $this->description = $this->get_option('description');
+            $this->seller_id = $this->get_option('seller_id');
+            $this->security_code = $this->get_option('security_code');
+            $this->bank_list = $this->get_option(static::BANK_LIST);
+            $this->doplata = $this->get_option(static::DOPLATA);
+            $this->blik_on = $this->get_option('blik_on');
+            $this->api_key = $this->get_option('api_key');
+            $this->api_pass = $this->get_option('api_pass');
+            $this->proxy_server = (bool)(int)$this->get_option('proxy_server');
+            $this->enable_IP_validation = (bool)(int)$this->get_option('enable_IP_validation');
+            $this->autoFinish = (int)$this->get_option('auto_finish_order');
+            $this->shipping_methods = $this->get_option('shipping_methods', array());
+            $this->online_methods_only = (int)$this->get_option('online_methods_only');
         }
 
     }

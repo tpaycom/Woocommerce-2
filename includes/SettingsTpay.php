@@ -197,11 +197,20 @@ class SettingsTpay
                     0 => __('NIE', static::WOOCOMMERCE),
                 ),
             ),
+            'online_methods_only'      => array(
+                static::TITLE           => __('Pokaż tylko metody płatności księgujące online', static::WOOCOMMERCE),
+                static::TYPE            => static::SELECT,
+                static::DEFAULT_SETTING => 0,
+                static::OPTIONS         => array(
+                    0 => __('NIE', static::WOOCOMMERCE),
+                    1 => __('TAK', static::WOOCOMMERCE),
+                ),
+            ),
             'documentation'     => array(
-                static::TITLE       => __('Dokumentacja techniczna', static::WOOCOMMERCE),
+                static::TITLE       => __('Instrukcja konfiguracji', static::WOOCOMMERCE),
                 static::TYPE        => static::TITLE,
                 static::DESCRIPTION => sprintf(__(' <a href="%s" TARGET="_blank">
- Link do dokumentacji Technicznej systemu tpay.com</a>.', static::WOOCOMMERCE), 'https://tpay.com/dokumentacje.html'),
+ Link do instrukcji konfiguracji modułu</a>.', static::WOOCOMMERCE), 'https://support.tpay.com/pl/developer/addons/woocommerce/woocommerce-instrukcja'),
             ),
         );
     }

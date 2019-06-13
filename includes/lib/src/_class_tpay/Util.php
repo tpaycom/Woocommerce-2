@@ -96,7 +96,7 @@ class Util
     public static function log($title, $text)
     {
         $text = (string)$text;
-        $logFilePath = dirname(__FILE__) . '/../log';
+        $logFilePath = dirname(__FILE__) . '/../log.php';
 
         $ip = (isset($_SERVER[static::REMOTE_ADDR])) ? $_SERVER[static::REMOTE_ADDR] : '';
 
@@ -122,7 +122,7 @@ class Util
     public static function logLine($text)
     {
         $text = (string)$text;
-        $logFilePath = dirname(__FILE__) . '/../log';
+        $logFilePath = dirname(__FILE__) . '/../log.php';
         if (file_exists($logFilePath) && is_writable($logFilePath)) {
             file_put_contents($logFilePath, "\n" . $text, FILE_APPEND);
         }

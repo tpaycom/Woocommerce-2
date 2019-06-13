@@ -1638,7 +1638,8 @@ jQuery(function ($) {
 
         $('input#card_number').formance('format_credit_card_number').on('keyup change blur', function (event) {
             $('div.card_icon').removeClass('hover');
-            if (!$(this).formance('validate_credit_card_number')) {
+            $(this).val($.payment.formatCardNumber($(this).val()));
+            if (!$.payment.validateCardNumber($(this).val())) {
                 $(this).addClass('wrong');
                 setWrong(this);
                 infoMessage(1);
@@ -1704,7 +1705,6 @@ jQuery(function ($) {
             $('input').each(function () {
                 if ($(this).hasClass('wrong')) {
                     x = false;
-                    $("#place_order").attr("disabled", "disabled");
                 }
             });
             if (cn.length === 0 || ed.length === 0 || cvc.length === 0 || regulations === false) {
@@ -1718,25 +1718,16 @@ jQuery(function ($) {
                 encrypt.setPublicKey(decoded);
                 var encrypted = encrypt.encrypt(cd);
                 $("#card_data").val(encrypted);
-                $("#place_order").removeAttr("disabled", "disabled");
             }
         }
 
         function setWrong(elem) {
             $(elem).css({'border': '2px solid #ff9696', 'box-shadow': '0 1px 3px #dcdcdc', 'background': '#ffeeee'});
-            if ($(".payment_method_tpaycards").css('display') != 'none') {
-                $("#place_order").attr("disabled", "disabled");
-            }
-
         }
 
         $(".payment_box.payment_method_tpaycards").visibilityChanged({
             callback: function (element, visible) {
-                // do something here
                 enablePayment();
-                if ($(".payment_box.payment_method_tpaycards").css('display') == 'none') {
-                    $("#place_order").removeAttr("disabled", "disabled");
-                }
             },
             runOnLoad: false,
             frequency: 1000
@@ -1806,10 +1797,16 @@ jQuery(function ($) {
     $(document).ready(function () {
         var RSA = document.getElementById("tpayRSA").textContent;
         new CardPayment("", RSA);
-
-
+        $('.tpay_new_card_radio').click(
+            function () {
+                $('#new_card_form').css('display', 'block');
+            }
+        );
+        $('.tpay_card_radio').click(
+            function () {
+                $('#new_card_form').css('display', 'none');
+            }
+        );
     });
 
 });
-
-

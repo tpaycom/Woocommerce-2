@@ -50,7 +50,8 @@ class Lang
             'acceptance_is_required' => 'Acceptance of regulations is required before payment',
 
             // CARD
-
+            'saved_card'      => 'Saved card ',
+            'new_card'        => 'New card',
             'card_number'     => 'Card number',
             'expiration_date' => 'Expiration date',
             'signature'       => 'For MasterCard, Visa or Discover, it\'s the last three digits
@@ -95,8 +96,8 @@ class Lang
 
             // BLIK
 
-            'blik_info'              => 'Wpisz 6 cyfrowy kod i naciśnij "Kupuję i płacę" aby powiązać transakcję blik.',
-            'blik_info2'             => 'Jeśli chcesz dokonać tradycyjnej płatności, pozostaw to pole puste.',
+            'blik_info'              => 'Jeśli chcesz zapłacić kodem BLIK, wpisz go i naciśnij "Kupuję i płacę".',
+            'blik_info2'             => 'W przeciwnym wypadku pozostaw to pole puste.',
             'blik_accept'            => 'Korzystając z tej metody płatności oświadczasz, że akceptujesz',
 
             // BANK SELECTION
@@ -108,7 +109,8 @@ class Lang
             'acceptance_is_required' => 'Akceptacja regulaminu jest obowiązkowa, przed rozpoczęciem płatności',
 
             // CARD
-
+            'saved_card'         => 'Zapisana karta ',
+            'new_card'           => 'Nowa karta',
             'card_number'        => 'Numer karty',
             'expiration_date'    => 'Termin ważności',
             'signature'          => 'Dla MasterCard, Visa lub Discover, są to trzy ostatnie

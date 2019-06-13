@@ -411,15 +411,13 @@ class CardAPI
         $params = $this->saleValidateAndPrepareParams($clientAuthCode, $saleDescription, $amount,
             $currency, $orderID, $lang, static::PRESALE);
 
-        Util::log('Presale params', print_r($params, true) . ' hash alg ' . $this->hashAlg);
-
         $amount = number_format($amount, 2, '.', '');
 
         $params[static::SIGN] = hash($this->hashAlg, static::PRESALE . $clientAuthCode . $saleDescription .
             $amount . $currency . $orderID . $lang . $this->verificationCode);
         $params[static::APIPASS] = $this->apiPass;
 
-        Util::log('Pre sale params with hash ', print_r($params, true) . 'req url ' . $this->apiURL . $this->apiKey);
+        Util::log('Presale params', print_r($params, true));
 
         return Curl::doCurlRequest($this->apiURL . $this->apiKey, $params);
     }

@@ -198,16 +198,46 @@ class PaymentCard
         return Util::parseTemplate('card/_tpl/paymentForm', $data);
     }
 
+    public function getTransactionUrl(
+        $name,
+        $email,
+        $description,
+        $amount,
+        $currency,
+        $orderId = '',
+        $oneTimer = false,
+        $language = 'pl',
+        $powUrl = '',
+        $powUrlBlad = ''
+    )
+    {
+        $api = new CardAPI($this->apiKey, $this->apiPass, $this->code, $this->hashAlg);
+
+        return $api->registerSale(
+            $name,
+            $email,
+            $description,
+            $amount,
+            $currency,
+            $orderId,
+            $oneTimer,
+            $language,
+            true,
+            $powUrl,
+            $powUrlBlad
+        );
+    }
+
     /**
      * Check cURL request from tpay server after payment.
      * This method check server ip, required fields and md5 checksum sent by payment server.
      * Display information to prevent sending repeated notifications.
      *
+     * @param bool $proxy
      * @return mixed
-     *
      * @throws TException
      */
-    public function handleNotification()
+    public function handleNotification($proxy)
     {
         Util::log('card handle notification', print_r($_POST, true));
 
@@ -219,34 +249,11 @@ class PaymentCard
         } else {
             throw new TException('Unknown notification type');
         }
-
-        if ($this->validateServerIP === true && $this->checkServer() === false) {
+        if ($this->validateServerIP === true && $this->checkServer($proxy) === false) {
             throw new TException('Request is not from secure server');
         }
-
         echo json_encode(array(static::RESULT => '1'));
-
-        if ($notificationType === 'sale' || $notificationType === 'refund') {
-            $resp = array(
-                'type'            => $notificationType,
-                static::ORDERID   => $response[static::ORDERID],
-                'sign'            => $response['sign'],
-                static::SALE_AUTH => $response[static::SALE_AUTH],
-                'date'            => $response['date'],
-                'card'            => $response['card'],
-                'status'          => $response['status'],
-            );
-            if (isset($response['test_mode'])) {
-                $resp['test_mode'] = $response['test_mode'];
-            }
-            if (isset($response['cli_auth'])) {
-                $resp['cli_auth'] = $response['cli_auth'];
-            }
-            if (isset($response['sale_ref'])) {
-                $resp['sale_ref'] = $response['sale_ref'];
-            }
-            return $resp;
-        } elseif ($notificationType === 'deregister') {
+        if (in_array($notificationType, array('sale', 'refund', 'deregister'))) {
             return $response;
         } else {
             throw new TException('Incorrect payment');
@@ -256,13 +263,27 @@ class PaymentCard
     /**
      * Check if request is called from secure tpay server
      *
+     * @param bool $allowProxy
      * @return bool
      */
-    private function checkServer()
+    private function checkServer($allowProxy)
     {
-        return (isset($_SERVER[static::REMOTE_ADDR]) && in_array($_SERVER[static::REMOTE_ADDR], $this->secureIP))
-        || (isset($_SERVER['HTTP_CF_CONNECTING_IP']) && in_array($_SERVER['HTTP_CF_CONNECTING_IP'], $this->secureIP))
-            ? true : false;
+        if (isset($_SERVER[static::REMOTE_ADDR]) && in_array($_SERVER[static::REMOTE_ADDR], $this->secureIP)) {
+            return true;
+        }
+        if ($allowProxy && isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            $proxyIps = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+            if (in_array($proxyIps[0], $this->secureIP)) {
+                return true;
+            }
+        }
+        if ($allowProxy && isset($_SERVER['HTTP_CF_CONNECTING_IP']) && in_array($_SERVER['HTTP_CF_CONNECTING_IP'],
+                $this->secureIP)
+        ) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -467,8 +488,39 @@ class PaymentCard
     public function cardSavedSale($cliAuth, $saleAuth)
     {
         $api = new CardAPI($this->apiKey, $this->apiPass, $this->code, $this->hashAlg);
+        $response = $api->sale($cliAuth, $saleAuth);
+        Util::log('Sale response', print_r($response, true));
 
-        return $api->sale($cliAuth, $saleAuth);
+        return $response;
+    }
+
+    /**
+     * Get HTML form for saved card transaction. Using for payment in merchant shop
+     *
+     * @param string $cliAuth client auth sign form prev payment
+     * @param string $desc transaction description
+     * @param float $amount amount
+     * @param string $orderId order id
+     * @param string $language language
+     * @param string $currency currency
+     *
+     * @return string
+     *
+     * @throws TException
+     */
+    public function getPresaleTransaction(
+        $cliAuth,
+        $desc,
+        $amount,
+        $orderId = '',
+        $language = 'pl',
+        $currency = '985')
+    {
+        $api = new CardAPI($this->apiKey, $this->apiPass, $this->code, $this->hashAlg);
+        $response = $api->presale($cliAuth, $desc, $amount, $currency, $orderId, $language);
+        Util::log('Presale response', print_r($response, true));
+
+        return $response;
     }
 
     /**
@@ -512,7 +564,6 @@ class PaymentCard
         if ($sign !== $hash) {
             Util::log('sum', $type . $testMode . $saleAuth . $saleRef . $orderId . $cliAuth . $card .
                 $currency . $amount . $saleDate . $status . $reason . $this->code);
-            Util::log('type', $type);
             throw new TException('Card payment - invalid checksum');
 
         }

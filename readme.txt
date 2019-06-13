@@ -3,8 +3,8 @@ Contributors: tpay.com
 Donate link: https://tpay.com/
 Tags: woocommerce, tpay, payment, polish gateway, polska brama płatności, bramka płatności, płatności internetowe
 Requires at least: 2.0.0
-Tested up to: 4.9.8
-Stable tag: 2.6.51
+Tested up to: 5.1.1
+Stable tag: 2.7.9
 License: GPLv2
 Accept payments from all major polish banks directly on your WooCommerce site via tpay.com polish payment gateway system.
 
@@ -74,14 +74,49 @@ b)	Wyślij cały folder  do katalogu wp-content/plugins znajdującego się w Two
 
 = Testy =
 
-Moduł był testowany na systemie zbudowanym z wersji Woocommerce 3.4.4 i Wordpress 4.9.8.
+Moduł był testowany na systemie zbudowanym z wersji Woocommerce 3.5.7 i Wordpress 5.1.1
 
 
 = KONTAKT =
 
 W razie potrzeby odpowiedzi na pytania powstałe podczas lektury lub szczegółowe wyjaśnienie kwestii technicznych prosimy o kontakt poprzez formularz znajdujący się w Panelu Odbiorcy lub na adres e-mail: pt@tpay.com
 
+v2.7.9
+Poprawiono wyświetlanie formularza banków w widoku listy rozwijanej.
+Poprawiono walidację kodu BLIK i treść formularza BLIK.
+v2.7.8
+Poprawiono rozpoznawanie języka w transakcjach kartą
 == Changelog ==
+v2.7.7
+Dostosowano opcjonalność niektórych parametrów adresowych przy tworzeniu transakcji BLIK
+v2.7.6
+Dodano możliwość zapisania karty przez wszystkich użytkowników.
+Poprawiono funkcjonalność formularza kartowego.
+v2.7.5
+Poprawiono sposób walidacji formularza płatności kartą.
+v2.7.4
+Dodano przechowywanie informacji o języku płatnika w module Tpay credit cards, w celu poprawnego informowania o zwrotach.
+v2.7.3
+Poprawiono wyświetlanie bramki kartowej i obsługę skryptów
+v2.7.2
+Dodano obsługę subskrypcji z dodatkiem Woocommerce Subscriptions
+Dodano opcję wyświetlania kanałów księgujących wyłącznie online lub wszystkich
+v2.7.01
+Naprawiono błąd wywoływania klasy WC_Shipping
+v2.7.0
+Dodano możliwość zapisywania kart płatniczych do ponownego użytku w module tpay.com credit cards dla zalogowanych użytkowników.
+Dodano mechanizm ponawiania płatności po nieudanej płatności nową lub zapisaną kartą.
+Dodano obsługę usuwania wyrejestrowanych kart.
+Dodano obszerniejsze logowanie czynności klienta w szczegółach zamówienia.
+Dodano obsługę zwrotów wykonywanych w Panelu Odbiorcy Płatności.
+v2.6.55
+Poprawka logowania powiadomień o wpłatach
+v2.6.54
+Poprawka kalkulacji wartości koszyka dla starszych wersji woocommerce
+v2.6.53
+Aktualizacja płatności ratami
+v2.6.52
+Poprawiono błąd działania wtyczki spowodowany przestarzałymi danymi konfiguracyjnymi metod wysyłki.
 v2.6.51
 Usunięto zdublowane wyświetlanie informacji o prowizji za płatność
 v2.6.50

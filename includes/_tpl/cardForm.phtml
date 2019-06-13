@@ -16,68 +16,86 @@ if (
     $path = str_replace('http://', 'https://', $path);
 }
 ?>
-
-<script type="text/javascript" src="<?php echo $path ?>../lib/src/common/_js/jquery.min.js"></script>
+<script>
+    if(!window.jQuery)
+    {
+        var script = document.createElement('script');
+        script.type = "text/javascript";
+        script.src = "<?php echo $path ?>../lib/src/common/_js/jquery.min.js";
+        document.getElementsByTagName('head')[0].appendChild(script);
+    }
+</script>
 <script type="text/javascript" src="<?php echo $path ?>../lib/src/common/_js/jsencrypt.min.js"></script>
 <script type="text/javascript" src="<?php echo $path ?>../lib/src/common/_js/string_routines.js"></script>
 <script type="text/javascript" src="<?php echo $path ?>../_js/visibilityChangesHandler.js?3"></script>
-<script type="text/javascript" src="<?php echo $path ?>../_js/tpayCards.js?51"></script>
-<link rel="stylesheet" href="<?php echo $path ?>../lib/src/common/_css/style.css?12">
+<script type="text/javascript" src="<?php echo $path ?>../lib/src/common/_js/jquery.payment.js"></script>
+<script type="text/javascript" src="<?php echo $path ?>../_js/tpayCards.js?58"></script>
+<link rel="stylesheet" href="<?php echo $path ?>../lib/src/common/_css/style.css?16">
 
 <input type="hidden" name="carddata" id="card_data" value=""/>
 <div class="insidebg">
     <?php echo $this->description; ?>
     <p id="tpayRSA" style="display: none"><?php echo $this->keyRSA; ?></p>
     <div id="powered_by"></div>
-    <div id="card_payment">
-        <label for="card_number"><?php tpay\Lang::l('card_number') ?></label>
-        <input id="card_number" autocompletetype="cc-number" size="30" type="tel" autocomplete="off"
-               maxlength="23" placeholder="0000 0000 0000 0000" tabindex="1" value=""/>
-
-        <div id="expiry_date_wrapper">
-            <label for="transaction_card_expiry_month"><?php tpay\Lang::l('expiration_date') ?></label>
-            <input id="expiry_date" maxlength="9" type="tel" placeholder="00 / 00" autocomplete="off"
-                   autocompletetype="cc-exp" tabindex="2" value=""/>
-        </div>
-        <div id="cvc_wrapper">
-            <label for="cvc">CVC <span
-                    title="<?php tpay\Lang::l('signature') ?>">?</span></label>
-            <input id="cvc" maxlength="3" type="tel" autocomplete="off" autocompletetype="cc-cvc" placeholder="000"
-                   tabindex="4" value="" pattern=".{3,}"/>
-        </div>
-
-        <input type="hidden" name="tpayID" value="<?php echo $this->midId; ?>">
+    <div id="saved_card_payment">
+        <?php
+        foreach ($data['cards'] as $cardId => $cardNoShort) {
+            echo '<label><input type="radio" name="tpayCardId" class="tpay_card_radio" value="'.$cardId.'"/>' . tpay\Lang::get('saved_card') .$cardNoShort.'</label>';
+        }
+        if (count($data['cards']) > 0) {
+            echo '<label><input type="radio" name="tpayCardId" class="tpay_new_card_radio" value="newCard"/>';
+            tpay\Lang::l('new_card');
+            echo '</label>';
+        }
+        ?>
     </div>
-
-    <div id="card_icons">
-        <div class="card_icon" id="visa"></div>
-        <div class="card_icon" id="master"></div>
-        <div class="card_icon" id="maestro"></div>
-        <div class="card_icon" id="diners"></div>
-        <div class="card_icon" id="jcb"></div>
-        <div class="card_icon" id="amex"></div>
-    </div>
-    <div id="termsCheckboxBox">
-        <br/>
-        <input id="tpay-cards-accept-regulations-checkbox" type="checkbox" name="regulations" style="
+    <div id="new_card_form" style="<?php if (!empty($data['cards'])) { echo 'display:none'; }; ?>">
+        <div id="card_payment">
+            <label for="card_number"><?php tpay\Lang::l('card_number') ?></label>
+            <input id="card_number" autocompletetype="cc-number" size="30" type="tel" autocomplete="off"
+                   maxlength="23" placeholder="0000 0000 0000 0000" tabindex="1" value=""/>
+            <div id="expiry_date_wrapper">
+                <label for="transaction_card_expiry_month"><?php tpay\Lang::l('expiration_date') ?></label>
+                <input id="expiry_date" maxlength="9" type="tel" placeholder="00 / 00" autocomplete="off"
+                       autocompletetype="cc-exp" tabindex="2" value=""/>
+            </div>
+            <div id="cvc_wrapper">
+                <label for="cvc">CVC <span
+                        title="<?php tpay\Lang::l('signature') ?>">?</span></label>
+                <input id="cvc" maxlength="3" type="tel" autocomplete="off" autocompletetype="cc-cvc" placeholder="000"
+                       tabindex="3" value="" pattern=".{3,}"/>
+            </div>
+            <div class="amPmCheckbox">
+                <input type="checkbox" id="card_save" name="card_save"/>
+                <label for="card_save"><?php tpay\Lang::l('save_card'); ?></label>
+            </div>
+            <input type="hidden" name="tpayID" value="<?php echo $this->midId; ?>">
+        </div>
+        <div id="card_icons">
+            <div class="card_icon" id="visa"></div>
+            <div class="card_icon" id="master"></div>
+            <div class="card_icon" id="maestro"></div>
+            <div class="card_icon" id="diners"></div>
+            <div class="card_icon" id="jcb"></div>
+            <div class="card_icon" id="amex"></div>
+        </div>
+        <p id="info_msg_not_supported" style="display: none"><?php tpay\Lang::l('not_supported_card') ?></p>
+        <p id="info_msg_invalid" style="visibility: hidden"><?php tpay\Lang::l('invalid_card') ?></p>
+        <div id="termsCheckboxBox">
+            <br/>
+            <input id="tpay-cards-accept-regulations-checkbox" type="checkbox" name="regulations" style="
     text-align: right;
     float:left;">
-        <label for="tpay-cards-accept-regulations-checkbox" style="display: inline">
-
-            <?php tpay\Lang::l('accept') ?> <a href="<?php echo $data['regulation_url'] ?>"
-                                               target="_blank"><?php tpay\Lang::l('regulations_url') ?></a>
-            <?php tpay\Lang::l('regulations'); ?>
-        </label>
-
+            <label for="tpay-cards-accept-regulations-checkbox" style="display: inline">
+                <?php tpay\Lang::l('accept') ?> <a href="<?php echo $data['regulation_url'] ?>"
+                                                   target="_blank"><?php tpay\Lang::l('regulations_url') ?></a>
+                <?php tpay\Lang::l('regulations'); ?>
+            </label>
+        </div>
     </div>
-    <p id="info_msg_not_supported" style="display: none"><?php tpay\Lang::l('not_supported_card') ?></p>
-    <p id="info_msg_invalid" style="visibility: hidden"><?php tpay\Lang::l('invalid_card') ?></p>
-
-
     <div id="loading_scr" style="display:none"><img src="<?php echo $path ?>../lib/src/common/_img/loading.gif"
                                                     style="vertical-align: middle;"/>&nbsp;&nbsp;Processing data,
         please
         wait...
     </div>
-
 </div>

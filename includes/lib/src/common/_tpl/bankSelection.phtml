@@ -63,17 +63,17 @@
                 bank_block.className = bank_block.className + ' bank-active';
             }
         };
-        s.src = 'https://secure.tpay.com/channels-<?php echo $data['merchant_id'] ?>1.js';
+        s.src = 'https://secure.tpay.com/groups-<?php echo $data['merchant_id'] . $data['online'] ?>.js';
         s.onload = function () {
             var str = '', first = true, i, str2 = '', temp;
-            var others = [29, 31, 49, 50, 57, 58, 59];
+            var others = [157, 106, 109, 148, 104];
 
-            for (i in tr_channels) {
-                var channel = tr_channels[i],
+            for (i in tr_groups) {
+                var channel = tr_groups[i],
                     id = channel[0],
                     width_style = (channel[0] == 40) ? 'width:270px' : '',
                     checked, class_name;
-                if (id === '49' && installmentsActive === false) {
+                if (id === '109' && installmentsActive === false) {
                     continue;
                 }
                 if (first) {

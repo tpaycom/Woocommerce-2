@@ -582,7 +582,7 @@ class Validate
         'jezyk'               => array(
             self::REQUIRED   => false,
             self::VALIDATION => array(self::OPTIONS),
-            self::OPTIONS    => array('PL', 'EN', 'DE', 'IT', 'ES', 'FR', 'RU'),
+            self::OPTIONS    => array('pl', 'en', 'de'),
         ),
         /**
          * Customer email address.
@@ -822,6 +822,7 @@ class Validate
          */
         self::AMOUNT   => array(
             self::REQUIRED   => true,
+            self::TYPE       => self::FLOAT,
             self::VALIDATION => array(self::FLOAT),
         ),
         /**
@@ -892,6 +893,11 @@ class Validate
             self::VALIDATION => array(self::OPTIONS),
             self::OPTIONS    => array('correct', 'declined'),
         ),
+        self::AMOUNT     => array(
+            self::REQUIRED   => true,
+            self::TYPE       => self::FLOAT,
+            self::VALIDATION => array(self::FLOAT),
+        ),
         /**
          * Message checksum
          */
@@ -922,7 +928,7 @@ class Validate
          * Date of accounting/deregistering
          */
         'date'          => array(
-            self::REQUIRED   => true,
+            self::REQUIRED   => false,
             self::TYPE       => self::STRING,
             self::VALIDATION => array(self::STRING)
         ),
@@ -938,9 +944,14 @@ class Validate
          * shortcut for client card number, eg ****5678
          */
         'card'          => array(
-            self::REQUIRED   => true,
+            self::REQUIRED   => false,
             self::TYPE       => self::STRING,
             self::VALIDATION => array(self::STRING, 'maxlength_8', 'minlength_8')
+        ),
+        'reason' => array(
+            self::REQUIRED   => false,
+            self::TYPE       => self::STRING,
+            self::VALIDATION => array(self::STRING),
         ),
     );
     /**
@@ -1024,6 +1035,12 @@ class Validate
      * @var array
      */
     private static $cardDeregisterResponseFields = array(
+        self::TYPE      => array(
+            self::REQUIRED   => false,
+            self::TYPE       => self::STRING,
+            self::VALIDATION => array(self::OPTIONS),
+            self::OPTIONS    => array('deregister'),
+        ),
         /**
          * client authorization ID, sent if onetimer option is not set
          * when creating client and client has not been deregistered (himself or by api)
@@ -1351,6 +1368,9 @@ class Validate
                 break;
             case static::PAYMENT_TYPE_CARD:
                 $requestFields = $notResp ? static::$cardPaymentRequestFields : static::$cardPaymentResponseFields;
+                break;
+            case static::CARD_DEREGISTER:
+                $requestFields = static::$cardDeregisterResponseFields;
                 break;
             case static::PAYMENT_TYPE_CARD_DIRECT:
                 $requestFields = static::$cardDirectPaymentRequestFields;
