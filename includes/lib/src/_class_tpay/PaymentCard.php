@@ -375,7 +375,7 @@ class PaymentCard
      */
     public function directSale($orderAmount, $orderID, $orderDesc, $currency = '985')
     {
-        $cardData = Util::post('carddata', static::STRING);
+        $cardData = Util::post('card_data', static::STRING);
         $clientName = Util::post('client_name', static::STRING);
         $clientEmail = Util::post('client_email', static::STRING);
         $saveCard = Util::post('card_save', static::STRING);
@@ -428,7 +428,7 @@ class PaymentCard
         $powUrlBlad = '',
         $module = null
     ) {
-        $cardData = Util::post('carddata', static::STRING);
+        $cardData = Util::post('card_data', static::STRING);
         $clientName = Util::post('client_name', static::STRING);
         $clientEmail = Util::post('client_email', static::STRING);
         $saveCard = Util::post('card_save', static::STRING);

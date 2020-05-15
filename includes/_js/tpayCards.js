@@ -1601,212 +1601,154 @@ jQuery(function ($) {
         }
     }.call(this);
 
-
     function CardPayment(url, pubkey) {
-
         this.url = url;
         this.pubkey = pubkey;
-
-        //  $("#card_payment_form").attr("action", url);
+        $("#card_payment_form").attr("action", url);
+        var numberInput = $('#card_number'),
+            expiryInput = $('#expiry_date'),
+            cvcInput = $('#cvc');
+        const TRIGGER_EVENTS = 'input change blur';
 
         function SubmitPayment() {
-
-            $("#continue_btn").fadeOut();
-            $("#loading_scr").fadeIn();
-
-            var cd = $('#card_number').val() + '|' + $('#expiry_date').val() + '|' + $('#cvc').val() + '|' + document.location.origin;
-            var encrypt = new JSEncrypt();
-            var decoded = Base64.decode(pubkey);
+            var cardNumber = numberInput.val().replace(/\s/g, ''),
+                cd = cardNumber + '|' + expiryInput.val().replace(/\s/g, '') + '|' + cvcInput.val().replace(/\s/g, '') + '|' + document.location.origin,
+                encrypt = new JSEncrypt(),
+                decoded = Base64.decode(pubkey),
+                encrypted;
             encrypt.setPublicKey(decoded);
-            var encrypted = encrypt.encrypt(cd);
-
-            $("#carddata").val(encrypted);
-            $("#card_number").val('');
-            $("#cvc").val('');
-            $("#expiry_date").val('');
+            encrypted = encrypt.encrypt(cd);
+            $("#card_data").val(encrypted);
+            $("#card_vendor").val($.payment.cardType(cardNumber));
         }
 
-        var
-            DINERS = /3(?:0[0-5]|[68][0-9])[0-9]{11}/,
-            JCB = /^(?:2131|1800|35[0-9]{3})[0-9]{11}$/,
-            MAESTRO = /^(50(18|20|38)|6304|67(59|6[1-3])|0604)$/,
-            AMERICAN = /^(?:3[47][0-9]{13})$/,
-            // DISCOVER = /^(?:6(?:011|5[0-9][0-9])[0-9]{12})$/,
-            MASTERCARD = /^(?:5[1-5][0-9]{14})$/,
-            VISA = /^(?:4[0-9]{12}(?:[0-9]{3})?)$/;
-        var goon = false;
+        function setWrong($elem) {
+            $elem.addClass('wrong').removeClass('valid');
+        }
 
-        $('input#card_number').formance('format_credit_card_number').on('keyup change blur', function (event) {
-            $('div.card_icon').removeClass('hover');
-            $(this).val($.payment.formatCardNumber($(this).val()));
-            if (!$.payment.validateCardNumber($(this).val())) {
-                $(this).addClass('wrong');
-                setWrong(this);
-                infoMessage(1);
-                goon = false;
+        function setValid($elem) {
+            $elem.addClass('valid').removeClass('wrong');
+        }
+
+        function validateCcNumber($elem) {
+            var isValid = false,
+                ccNumber = $.payment.formatCardNumber($elem.val()),
+                supported = ['mastercard', 'maestro', 'visa'],
+                type = $.payment.cardType(ccNumber),
+                notValidNote = $('#info_msg_not_valid'),
+                cardTypeHolder = $('.tpay-card-icon'),
+                notSupportedNote = $('#info_msg_not_supported');
+            $elem.val($.payment.formatCardNumber($elem.val()));
+            cardTypeHolder.attr('class', 'tpay-card-icon');
+            if (supported.indexOf(type) < 0 && type !== null && ccNumber.length > 1) {
+                showElem(notSupportedNote);
+                hideElem(notValidNote);
+                setWrong($elem);
+            } else if (supported.indexOf(type) > -1 && $.payment.validateCardNumber(ccNumber)) {
+                setValid($elem);
+                hideElem(notSupportedNote);
+                hideElem(notValidNote);
+                isValid = true;
+                SubmitPayment();
+            } else if (ccNumber.length < 4) {
+                hideElem(notSupportedNote);
+                hideElem(notValidNote);
+                setWrong($elem);
             } else {
-                $(this).removeClass('wrong').removeAttr('style');
-                infoMessage(0);
-                goon = true;
-                enablePayment();
-                var type = '',
-                    supported = ['master', 'visa'];
-                var cc_number = $(this).val().replace(/\s/g, '');
-
-                if ((VISA.exec(cc_number))) {
-                    type = 'visa';
-                } else if (JCB.exec(cc_number)) {
-                    type = 'jcb';
-                } else if (DINERS.exec(cc_number)) {
-                    type = 'diners';
-                } else if (MAESTRO.exec(cc_number)) {
-                    type = 'maestro';
-                } else if (AMERICAN.exec(cc_number)) {
-                    type = 'amex';
-                } else if (MASTERCARD.exec(cc_number)) {
-                    type = 'master';
-                }
-
-                if (supported.indexOf(type) < 0) {
-                    infoMessage(2);
-                    $(this).addClass('wrong');
-                    enablePayment();
-                }
-                if (type !== '') {
-                    $('#' + type).addClass('hover');
-                }
+                setWrong($elem);
+                showElem(notValidNote);
+                hideElem(notSupportedNote);
             }
-        });
-
-        function infoMessage(id) {
-            var inv = $('#info_msg_invalid'),
-                ns = $('#info_msg_not_supported');
-            switch (id) {
-                case 0:
-                    inv.css('visibility', 'hidden');
-                    inv.css('display', 'block');
-                    ns.css('display', 'none');
-                    break;
-                case 1:
-                    inv.css('visibility', 'visible');
-                    inv.css('display', 'block');
-                    ns.css('display', 'none');
-                    break;
-                case 2:
-                    inv.css('display', 'none');
-                    ns.css('display', 'block');
-                    ns.css('visibility', 'visible');
-                    break;
+            if (type !== '') {
+                cardTypeHolder.addClass('tpay-' + type + '-icon');
             }
+
+            return isValid;
         }
 
-        function enablePayment() {
-            var x = true, cn = $('#card_number').val(), ed = $('#expiry_date').val(), cvc = $('#cvc').val(), regulations = document.getElementById('tpay-cards-accept-regulations-checkbox').checked;
-            $('input').each(function () {
-                if ($(this).hasClass('wrong')) {
-                    x = false;
-                }
-            });
-            if (cn.length === 0 || ed.length === 0 || cvc.length === 0 || regulations === false) {
-                x = false;
-            }
-            if (x) {
-                var RSA = document.getElementById("tpayRSA").textContent;
-                var cd = cn + '|' + ed + '|' + cvc + '|' + document.location.origin;
-                var encrypt = new JSEncrypt();
-                var decoded = Base64.decode(RSA);
-                encrypt.setPublicKey(decoded);
-                var encrypted = encrypt.encrypt(cd);
-                $("#card_data").val(encrypted);
-            }
+        function hideElem($elem) {
+            $elem.css('display', 'none');
         }
 
-        function setWrong(elem) {
-            $(elem).css({'border': '2px solid #ff9696', 'box-shadow': '0 1px 3px #dcdcdc', 'background': '#ffeeee'});
+        function showElem($elem) {
+            $elem.css('display', 'block');
         }
 
-        $(".payment_box.payment_method_tpaycards").visibilityChanged({
-            callback: function (element, visible) {
-                enablePayment();
-            },
-            runOnLoad: false,
-            frequency: 1000
-        });
-
-        $('input#cvc').formance('format_credit_card_cvc').on('keyup change blur', function (event) {
-            if (!$(this).formance('validate_credit_card_cvc')) {
-                $(this).addClass('wrong');
-                setWrong(this);
-                goon = false;
+        function validateExpiryDate($elem) {
+            var isValid = false, expiration;
+            $elem.val($.payment.formatExpiry($elem.val()));
+            expiration = $elem.payment('cardExpiryVal');
+            if (!$.payment.validateCardExpiry(expiration.month, expiration.year)) {
+                setWrong($elem);
             } else {
-                $(this).removeClass('wrong').removeAttr('style');
-                enablePayment();
+                setValid($elem);
+                isValid = true;
+                SubmitPayment();
             }
-        });
 
-        function validationExpired(mm, yy) {
-            var today = new Date();
-            var expiry = new Date();
-            var expired = false, mm = Math.floor(parseFloat(mm)), yy = Math.floor(parseFloat(yy)) + (Math.floor(today.getFullYear() / 100) * 100);
-            if (!isNaN(mm) && !isNaN(yy)) {
-                expiry.setYear(mm === 12 ? yy + 1 : yy);
-                expiry.setMonth(mm === 12 ? 0 : mm);
-                expiry.setDate(1);
-                expiry.setHours(0);
-                expiry.setMinutes(0);
-                expiry.setSeconds(0);
-                expiry.setMilliseconds(0);
-                expired = !(expiry.getTime() > today.getTime());
-            }
-            return expired;
+            return isValid;
         }
 
-        $('select#cc_month,select#cc_year').on('keyup change blur', function (event) {
-            mm = $('#cc_month option:selected').val();
-            yy = $('#cc_year option:selected').val();
-            if (validationExpired(mm, yy)) {
-                $('select#cc_month,select#cc_year').addClass('wrong');
-                goon = false;
-            } else
-                $('select#cc_month,select#cc_year').removeClass('wrong');
-        });
-
-        $('input#expiry_date').formance('format_credit_card_expiry').on('keyup change blur', function (event) {
-            if (!$(this).formance('validate_credit_card_expiry')) {
-                $(this).addClass('wrong');
-                setWrong(this);
-                goon = false;
+        function validateCvc($elem) {
+            var isValid = false;
+            if (!$.payment.validateCardCVC($elem.val(), $.payment.cardType(numberInput.val().replace(/\s/g, '')))) {
+                setWrong($elem);
             } else {
-                $(this).removeClass('wrong').removeAttr('style');
-                enablePayment();
+                setValid($elem);
+                isValid = true;
+                SubmitPayment();
             }
-        });
-        $('input#tpay-cards-accept-regulations-checkbox').change(function () {
-            if (!$(this).is(':checked')) {
-                $(this).addClass('wrong');
-                setWrong(this);
-                goon = false;
-            } else {
-                $(this).removeClass('wrong').removeAttr('style');
-                enablePayment();
-            }
-        });
 
+            return isValid;
+        }
+
+        numberInput.on(TRIGGER_EVENTS, function () {
+            validateCcNumber($(this));
+        });
+        expiryInput.on(TRIGGER_EVENTS, function () {
+            validateExpiryDate($(this));
+        });
+        cvcInput.on(TRIGGER_EVENTS, function () {
+            validateCvc($(this));
+        });
     }
 
-    $(document).ready(function () {
+
+    $(".payment_box.payment_method_tpaycards").visibilityChanged({
+        callback: function (element, visible) {
+            SubmitPayment();
+        },
+        runOnLoad: false,
+        frequency: 1000
+    });
+
+    function handleTpayForm() {
+        $('input[name=savedId]').each(function () {
+            $(this).click(function () {
+                if ($(this).is(":checked")) {
+                    if ($(this).val() !== 'new') {
+                        $('#card_form').css({opacity: 1.0}).animate({opacity: 0.0}, 500);
+                        setTimeout(
+                            function () {
+                                $('#card_form').css({display: "none"})
+                            }, 500
+                        );
+                    }
+                }
+            });
+        });
+        $('#newCard').click(function () {
+            if ($(this).is(":checked")) {
+                $('#card_form').css({opacity: 0.0, display: "block"}).animate({opacity: 1.0}, 500);
+            }
+        });
+    }
+
+    jQuery(document).ready(function () {
         var RSA = document.getElementById("tpayRSA").textContent;
         new CardPayment("", RSA);
-        $('.tpay_new_card_radio').click(
-            function () {
-                $('#new_card_form').css('display', 'block');
-            }
-        );
-        $('.tpay_card_radio').click(
-            function () {
-                $('#new_card_form').css('display', 'none');
-            }
-        );
+        $('input[name=savedId]').first().prop('checked', "checked");
+        handleTpayForm();
     });
 
 });

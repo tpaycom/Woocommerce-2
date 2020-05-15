@@ -171,7 +171,7 @@ class TransactionAPI
     {
         $ready = Validate::validateConfig(Validate::PAYMENT_TYPE_BASIC, $config);
 
-        $ready['md5sum'] = md5($this->merchantId . $ready['kwota'] . $ready['crc'] . $this->merchantSecret);
+        $ready['md5sum'] = md5($this->merchantId . $ready['amount'] . $ready['crc'] . $this->merchantSecret);
         $ready['id'] = $this->merchantId;
 
         return $ready;

@@ -39,7 +39,7 @@ class Validate
     const ARR = 'array';
     const MAXLENGHT_128 = 'maxlenght_128';
     const OPTIONS = 'options';
-    const KANAL = 'kanal';
+    const GROUP = 'group';
     const MAXLENGHT_512 = 'maxlenght_512';
     const EMAIL_LIST = 'email_list';
     const OPIS_DODATKOWY = 'opis_dodatkowy';
@@ -472,14 +472,14 @@ class Validate
         /**
          * Transaction amount with dot as decimal separator.
          */
-        'kwota'               => array(
+        'amount'               => array(
             self::REQUIRED   => true,
             self::VALIDATION => array(self::FLOAT),
         ),
         /**
          * Transaction description
          */
-        'opis'                => array(
+        'description'                => array(
             self::REQUIRED   => true,
             self::VALIDATION => array(self::STRING, self::MAXLENGHT_128),
         ),
@@ -505,14 +505,14 @@ class Validate
          * Could be changed manually by customer.
          * Required for register transaction by transaction API
          */
-        self::KANAL           => array(
+        self::GROUP           => array(
             self::REQUIRED   => false,
             self::VALIDATION => array('uint'),
         ),
         /**
          * Customer will be presented only the selected group.
          */
-        'grupa'               => array(
+        'group'               => array(
             self::REQUIRED   => false,
             self::VALIDATION => array('unit'),
         ),
@@ -526,7 +526,7 @@ class Validate
         /**
          * The resulting URL return address that will send the result of a transaction in the form POST parameters.
          */
-        'wyn_url'             => array(
+        'result_url'             => array(
             self::REQUIRED   => false,
             self::VALIDATION => array(self::STRING, self::MAXLENGHT_512),
             self::FILTER     => 'url'
@@ -561,7 +561,7 @@ class Validate
         /**
          * The URL to which the customer will be transferred after successful completion of the transaction.
          */
-        'pow_url'             => array(
+        'return_url'             => array(
             self::REQUIRED   => false,
             self::VALIDATION => array(self::STRING, self::MAXLENGHT_512),
             self::FILTER     => 'url'
@@ -570,7 +570,7 @@ class Validate
          * The URL to which the client will be transferred in the event of an error.
          * Default is pow_url
          */
-        'pow_url_blad'        => array(
+        'return_error_url'        => array(
             self::REQUIRED   => false,
             self::VALIDATION => array(self::STRING, self::MAXLENGHT_512),
             self::FILTER     => 'url'
@@ -579,7 +579,7 @@ class Validate
          * Transactional panel language.
          * Default is PL
          */
-        'jezyk'               => array(
+        'language'               => array(
             self::REQUIRED   => false,
             self::VALIDATION => array(self::OPTIONS),
             self::OPTIONS    => array('pl', 'en', 'de'),
@@ -595,15 +595,7 @@ class Validate
         /**
          * Customer surname.
          */
-        'nazwisko'            => array(
-            self::REQUIRED   => false,
-            self::VALIDATION => array(self::STRING, self::MAXLENGHT_64),
-            self::FILTER     => 'name'
-        ),
-        /**
-         * Customer name.
-         */
-        'imie'                => array(
+        'name'            => array(
             self::REQUIRED   => false,
             self::VALIDATION => array(self::STRING, self::MAXLENGHT_64),
             self::FILTER     => 'name'
@@ -611,7 +603,7 @@ class Validate
         /**
          * Customer address.
          */
-        'adres'               => array(
+        'address'               => array(
             self::REQUIRED   => false,
             self::VALIDATION => array(self::STRING, self::MAXLENGHT_64),
             self::FILTER     => self::TEXT
@@ -619,7 +611,7 @@ class Validate
         /**
          * Customer city.
          */
-        'miasto'              => array(
+        'city'              => array(
             self::REQUIRED   => false,
             self::VALIDATION => array(self::STRING, self::MAXLENGHT_32),
             self::FILTER     => 'name'
@@ -627,7 +619,7 @@ class Validate
         /**
          * Customer postal code.
          */
-        'kod'                 => array(
+        'zip'                 => array(
             self::REQUIRED   => false,
             self::VALIDATION => array(self::STRING, 'maxlenght_10'),
             self::FILTER     => self::TEXT
@@ -636,14 +628,14 @@ class Validate
          * Country code.
          * Alphanumeric, 2 or 3 signs compatible with ISO 3166-1
          */
-        'kraj'                => array(
+        'country'                => array(
             self::REQUIRED   => false,
             self::VALIDATION => array('country_code'),
         ),
         /**
          * Customer phone.
          */
-        'telefon'             => array(
+        'phone'             => array(
             self::REQUIRED   => false,
             self::VALIDATION => array(self::STRING, 'maxlenght_16'),
             self::FILTER     => self::PHONE
@@ -651,7 +643,7 @@ class Validate
         /**
          * The parameter indicating acceptance of Terms tpay if it is available on the payee.
          */
-        'akceptuje_regulamin' => array(
+        'accept_tos' => array(
             self::REQUIRED   => false,
             self::VALIDATION => array(self::OPTIONS),
             self::OPTIONS    => array(0, 1),
@@ -1364,7 +1356,7 @@ class Validate
                 break;
             case static::PAYMENT_TYPE_BASIC_API:
                 $requestFields = static::$panelPaymentRequestFields;
-                $requestFields[static::KANAL][static::REQUIRED] = true;
+                $requestFields[static::GROUP][static::REQUIRED] = true;
                 break;
             case static::PAYMENT_TYPE_CARD:
                 $requestFields = $notResp ? static::$cardPaymentRequestFields : static::$cardPaymentResponseFields;
@@ -1914,7 +1906,7 @@ class Validate
                 break;
             case static::PAYMENT_TYPE_BASIC_API:
                 $requestFields = static::$panelPaymentRequestFields;
-                $requestFields[static::KANAL][static::REQUIRED] = true;
+                $requestFields[static::GROUP][static::REQUIRED] = true;
                 break;
             case static::PAYMENT_TYPE_CARD:
                 $requestFields = static::$cardPaymentRequestFields;

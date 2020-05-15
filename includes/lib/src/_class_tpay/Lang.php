@@ -31,13 +31,13 @@ class Lang
 
             // GLOBALS
             'fee_info'      => 'Fee for using this payment method: ',
-            'pay'           => 'Pay with tpay.com',
+            'pay'           => 'Pay with Tpay',
             'merchant_info' => 'Merchant info',
             'amount'        => 'Amount',
             'order'         => 'Order',
             // BLIK
-
-            'blik_info'              => 'Type in 6 digit code and press pay to commit blik payment.',
+            'codeInputText' => 'BLIK code',
+            'blik_info'              => 'Type in 6 digit code and confirm the order to commit BLIK payment.',
             'blik_info2'             => 'If you want to pay with standard method, leave this field blank.',
             'blik_accept'            => 'By using this method you confirm acceptance',
 
@@ -46,7 +46,9 @@ class Lang
             'other_methods'          => 'Others',
             'accept'                 => 'I accept the',
             'regulations_url'        => self::REGULATIONS,
-            self::REGULATIONS        => 'of tpay.com service',
+            self::REGULATIONS        => 'of Tpay service',
+            'privacy_policy'         => 'The administrator of personal data is Krajowy Integrator Płatności S.A based in Poznań.',
+            'privacy_policy_href'    => ' Take a look at the full content.',
             'acceptance_is_required' => 'Acceptance of regulations is required before payment',
 
             // CARD
@@ -60,11 +62,12 @@ class Lang
             'name_surname'    => 'Name and surname',
             'save_card'       => 'Save my card',
             'save_card_info'  => 'Let faster payments in future. Card data is stored on external, save server.',
+            'saved_card_label' => 'Pay by saved card ',
             'processing'      => 'Processing data, please wait...',
             'card_payment'    => 'Payment',
             'debit'           => 'Please debit my account',
-            'not_supported_card' => 'Sorry, your credit card type is currently not supported. Please try another payment method.',
-            'invalid_card'       => 'Your credit card number seems to be incomplete or invalid.',
+            'not_supported_card' => 'Sorry, your credit card is currently not supported. Please try another payment card or payment method.',
+            'not_valid_card' => 'Sorry, your credit card number is invalid. Please enter the valid card number',
             // DAC
 
             'transfer_details'   => 'Bank transfer details',
@@ -79,6 +82,7 @@ class Lang
             'szkwal_info'    => 'Your title transfer is dedicated to you and very important for the identification of
              payment. You can create a transfer as defined in its bank to
               quickly and easily fund your account in the future',
+            'new_card_label' => 'Pay by a new card',
 
             // WHITE LABEL
 
@@ -89,14 +93,14 @@ class Lang
             // GLOBALS
             'fee_info' => 'Za korzystanie z płatności online sprzedawca dolicza: ',
 
-            'pay'           => 'Zapłać z tpay.com',
+            'pay'           => 'Zapłać z Tpay',
             'merchant_info' => 'Dane sprzedawcy',
             'amount'        => 'Kwota',
             'order'         => 'Zamówienie',
 
             // BLIK
-
-            'blik_info'              => 'Jeśli chcesz zapłacić kodem BLIK, wpisz go i naciśnij "Kupuję i płacę".',
+            'codeInputText' => 'Kod BLIK',
+            'blik_info'              => 'Jeśli chcesz zapłacić kodem BLIK, wpisz go i dokończ zamówienie.',
             'blik_info2'             => 'W przeciwnym wypadku pozostaw to pole puste.',
             'blik_accept'            => 'Korzystając z tej metody płatności oświadczasz, że akceptujesz',
 
@@ -105,7 +109,9 @@ class Lang
             'other_methods'          => 'Pozostałe',
             'accept'                 => 'Akceptuję',
             'regulations_url'        => 'regulamin',
-            self::REGULATIONS        => 'serwisu tpay.com',
+            self::REGULATIONS        => 'serwisu Tpay',
+            'privacy_policy'         => 'Administratorem danych osobowych jest Krajowy Integrator Płatności spółka akcyjna z siedzibą w Poznaniu.',
+            'privacy_policy_href'    => 'Zapoznaj się z pełną treścią',
             'acceptance_is_required' => 'Akceptacja regulaminu jest obowiązkowa, przed rozpoczęciem płatności',
 
             // CARD
@@ -119,12 +125,14 @@ class Lang
             'name_surname'       => 'Imię i nazwisko',
             'save_card'          => 'Zapisz moją kartę',
             'save_card_info'     => 'Zezwolenie na szybszą płatność w przyszłości.
-             Dane karty zostaną zapisane na serwerze tpay',
+             Dane karty zostaną zapisane na serwerze Tpay',
+            'saved_card_label' => 'Zapłać zapisaną kartą ',
             'processing'         => 'Przetwarzanie danych, proszę czekać...',
             'card_payment'       => 'Zapłać',
             'debit'              => 'Proszę obciążyć moje konto',
-            'not_supported_card' => 'Przepraszamy, Twój typ karty nie jest obecnie obsługiwany. Prosimy opłacić zamówienie inną metodą.',
-            'invalid_card'       => 'Wprowadzony numer karty jest niekompletny lub nieprawidłowy.',
+            'not_supported_card' => 'Przepraszamy, ten typ karty nie jest obecnie obsługiwany. Prosimy skorzystać z innej karty lub wybrać inną metodę płatności.',
+            'not_valid_card' => 'Przepraszamy, wprowadzony numer karty jest niepoprawny. Prosimy wprowadzić prawidłowy numer.',
+            'new_card_label' => 'Zapłać nową kartą',
             // DAC
 
             'transfer_details'   => 'Szczegóły przelewu',

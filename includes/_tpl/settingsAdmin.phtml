@@ -1,61 +1,24 @@
-<?php
+<h2><?php _e('Tpay', 'woocommerce'); ?></h2>
+<table class="form-table">
+    <?php $this->generate_settings_html(); ?>
+</table>
 
-/*
- * Created by PhpStorm.
- * User: user
- * Date: 25.01.2017
- * Time: 13:44
- */
+<script type="text/javascript">
 
-?>
-    <h2><?php _e('tpay.com', 'woocommerce'); ?></h2>
-    <table class="form-table">
-        <?php $this->generate_settings_html(); ?>
-    </table>
+    function bank_list() {
+        var a = jQuery("#woocommerce_transferuj_bank_list option:selected").val();
 
-    <script type="text/javascript">
-
-        function bank_list() {
-            var a = jQuery("#woocommerce_transferuj_bank_list option:selected").val();
-
-            if (a == "1") {
-                jQuery('label[for="woocommerce_transferuj_bank_view"]').attr("style", "visibility: hidden ")
-                jQuery("#woocommerce_transferuj_bank_view").attr("style", "visibility: hidden")
-                jQuery('label[for="woocommerce_transferuj_scroll"]').attr("style", "visibility: hidden ")
-                jQuery("#woocommerce_transferuj_scroll").attr("style", "visibility: hidden")
-
-            }
-            else {
-                jQuery('label[for="woocommerce_transferuj_bank_view"]').attr("style", "visibility: ")
-                jQuery("#woocommerce_transferuj_bank_view").attr("style", "visibility: ")
-                var a = jQuery("#woocommerce_transferuj_bank_view option:selected").val();
-
-                if (a == "1") {
-                    jQuery('label[for="woocommerce_transferuj_scroll"]').attr("style", "visibility: hidden ")
-                    jQuery("#woocommerce_transferuj_scroll").attr("style", "visibility: hidden")
-
-                }
-                else {
-                    jQuery('label[for="woocommerce_transferuj_scroll"]').attr("style", "visibility: ")
-                    jQuery("#woocommerce_transferuj_scroll").attr("style", "visibility: ")
-
-
-                }
-
-            }
-
+        if (a == "1") {
+            jQuery('label[for="woocommerce_transferuj_bank_view"]').attr("style", "visibility: hidden ")
+            jQuery("#woocommerce_transferuj_bank_view").attr("style", "visibility: hidden")
+            jQuery('label[for="woocommerce_transferuj_scroll"]').attr("style", "visibility: hidden ")
+            jQuery("#woocommerce_transferuj_scroll").attr("style", "visibility: hidden")
 
         }
-
-        bank_list();
-        jQuery("#woocommerce_transferuj_bank_list").change(function () {
-
-            bank_list();
-        });
-
-        jQuery("#woocommerce_transferuj_bank_view").change(function () {
-
-            var a = jQuery("#woocommerce_transferuj_bank_view option:selected").val();
+        else {
+            jQuery('label[for="woocommerce_transferuj_bank_view"]').attr("style", "visibility: ")
+            jQuery("#woocommerce_transferuj_bank_view").attr("style", "visibility: ")
+            a = jQuery("#woocommerce_transferuj_bank_view option:selected").val();
 
             if (a == "1") {
                 jQuery('label[for="woocommerce_transferuj_scroll"]').attr("style", "visibility: hidden ")
@@ -65,29 +28,39 @@
             else {
                 jQuery('label[for="woocommerce_transferuj_scroll"]').attr("style", "visibility: ")
                 jQuery("#woocommerce_transferuj_scroll").attr("style", "visibility: ")
-
-
             }
-        });
+        }
+    }
 
+    bank_list();
+    jQuery("#woocommerce_transferuj_bank_list").change(function () {
+        bank_list();
+    });
 
-        jQuery("#woocommerce_transferuj_doplata").change(function () {
+    jQuery("#woocommerce_transferuj_bank_view").change(function () {
+        var a = jQuery("#woocommerce_transferuj_bank_view option:selected").val();
+        if (a == "1") {
+            jQuery('label[for="woocommerce_transferuj_scroll"]').attr("style", "visibility: hidden ")
+            jQuery("#woocommerce_transferuj_scroll").attr("style", "visibility: hidden")
 
-            if (jQuery("#woocommerce_transferuj_doplata").val() == "0") {
+        }
+        else {
+            jQuery('label[for="woocommerce_transferuj_scroll"]').attr("style", "visibility: ")
+            jQuery("#woocommerce_transferuj_scroll").attr("style", "visibility: ")
+        }
+    });
 
-                jQuery("#woocommerce_transferuj_kwota_doplaty").attr("style", "visibility: hidden")
-
+    jQuery("#woocommerce_transferuj_doplata").change(function () {
+        if (jQuery("#woocommerce_transferuj_doplata").val() == "0") {
+            jQuery("#woocommerce_transferuj_kwota_doplaty").attr("style", "visibility: hidden")
+        }
+        else {
+            if (jQuery("#woocommerce_transferuj_doplata").val() == "2") {
+                alert("Podaj jaki % kwoty zamówienia ma zostać doliczony do zapłaty")
             }
-            else {
-                if (jQuery("#woocommerce_transferuj_doplata").val() == "2") {
-                    alert("Podaj jaki % kwoty zamówienia ma zostać doliczony do zapłaty")
-                }
-                jQuery("#woocommerce_transferuj_kwota_doplaty").attr("style", "visibility: visible ")
-            }
-        });
+            jQuery("#woocommerce_transferuj_kwota_doplaty").attr("style", "visibility: visible ")
+        }
+    });
 
-    </script>
-
-
+</script>
 <?php
-
